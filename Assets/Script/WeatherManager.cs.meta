@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 24e9a2bb2201f47478592d87a3b20857
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - weatherIconUI: {instanceID: 0}
+  - bgmAudioSource: {instanceID: 0}
+  - sunnySprite: {instanceID: 0}
+  - rainySprite: {instanceID: 0}
+  - stormySprite: {instanceID: 0}
+  - foggySprite: {instanceID: 0}
+  - sunnySound: {instanceID: 0}
+  - rainSound: {instanceID: 0}
+  - stormSound: {instanceID: 0}
+  - sunnySkybox: {instanceID: 0}
+  - stormySkybox: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
