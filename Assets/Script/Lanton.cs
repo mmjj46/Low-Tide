@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class Lanton : MonoBehaviour, IInteractable
 {
-    private bool isWorking = false; // 시작은 항상 고장
+    // ★ GameManager가 참조할 고장 상태 (public으로 변경)
+    public bool isBroken = true; // true = 고장남, false = 정상 (초기값 true: 시작은 항상 고장)
+
     private GameManager gameManager;
 
     void Start()
@@ -17,7 +19,7 @@ public class Lanton : MonoBehaviour, IInteractable
     void Update()
     {
         // 엔터 키로 수리
-        if (Input.GetKeyDown(KeyCode.Return) && !isWorking)
+        if (Input.GetKeyDown(KeyCode.Return) && isBroken)
         {
             Debug.Log("Lanton: 엔터키 감지 -> TryRepair() 호출");
             TryRepair();
@@ -26,13 +28,13 @@ public class Lanton : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        Debug.Log($"Lanton: Interact() 호출됨. isWorking = {isWorking}");
+        Debug.Log($"Lanton: Interact() 호출됨. isBroken = {isBroken}");
 
-        if (isWorking)
+        if (!isBroken) // ★ 고장나지 않았으면 정상 작동
         {
             UIManager.Instance.ShowNotification("세상이 밝아졌다. 당신의 마음도 조금이나마 밝아진다.");
         }
-        else
+        else // ★ 고장났으면 수리 필요
         {
             UIManager.Instance.ShowNotification("신기하게 생긴 등명기이다. 고치면 불을 밝힐 수 있다.");
         }
@@ -42,7 +44,7 @@ public class Lanton : MonoBehaviour, IInteractable
     {
         Debug.Log("Lanton: TryRepair() 호출됨");
 
-        if (isWorking)
+        if (!isBroken) // ★ 이미 수리되어 있으면
         {
             UIManager.Instance.ShowNotification("이미 불이 켜져 있다.");
             return;
@@ -65,9 +67,9 @@ public class Lanton : MonoBehaviour, IInteractable
         }
 
         // 수리 실행
-        if (!isWorking)
+        if (isBroken) // ★ 고장난 상태라면
         {
-            isWorking = true;
+            isBroken = false; // ★ 수리 완료 (false = 정상)
             UIManager.Instance.ShowNotification("세상이 밝아졌다. 당신의 마음도 조금이나마 밝아진다.");
             Debug.Log("Lanton: 수리 완료!");
 
@@ -76,9 +78,10 @@ public class Lanton : MonoBehaviour, IInteractable
         }
     }
 
+    // ★ GameManager가 호출할 함수 (15일차에 고장)
     public void BreakLanton()
     {
-        isWorking = false;
-        Debug.Log("Lanton.cs: 등명기 고장 발생! (isWorking = false)");
+        isBroken = true; // ★ true = 고장남
+        Debug.Log("Lanton.cs: 등명기 고장 발생! (isBroken = true)");
     }
 }

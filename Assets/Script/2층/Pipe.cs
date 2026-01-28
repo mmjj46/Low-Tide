@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class Pipe : MonoBehaviour, IInteractable
 {
-    private bool isConnected = false;
+    // ★ GameManager가 참조할 고장 상태 (public으로 변경)
+    public bool isBroken = false; // true = 연결 안 됨(고장), false = 연결됨(정상)
+
     private GameManager gameManager;
 
     void Start()
@@ -17,7 +19,7 @@ public class Pipe : MonoBehaviour, IInteractable
     void Update()
     {
         // [임시] 숫자 4키로 연결 (미니게임 완성 전까지)
-        if (Input.GetKeyDown(KeyCode.Alpha4) && !isConnected)
+        if (Input.GetKeyDown(KeyCode.Alpha4) && isBroken)
         {
             Debug.Log("Pipe: 4키 감지 -> TryConnect() 호출");
             TryConnect();
@@ -27,13 +29,13 @@ public class Pipe : MonoBehaviour, IInteractable
     // F키 (상호작용) - 평소 사용
     public void Interact()
     {
-        Debug.Log($"Pipe: Interact() 호출됨. isConnected = {isConnected}");
+        Debug.Log($"Pipe: Interact() 호출됨. isBroken = {isBroken}");
 
-        if (isConnected)
+        if (!isBroken) // ★ 연결되어 있으면 (정상)
         {
             UIManager.Instance.ShowNotification("깨끗한 물이 흐르고 있다.");
         }
-        else
+        else // ★ 연결 안 되어 있으면 (고장)
         {
             UIManager.Instance.ShowNotification("물을 쓰려면 파이프를 연결해야 한다.");
             // (나중에 미니게임 시작 코드 추가)
@@ -45,7 +47,7 @@ public class Pipe : MonoBehaviour, IInteractable
     {
         Debug.Log("Pipe: TryConnect() 호출됨");
 
-        if (isConnected)
+        if (!isBroken) // ★ 이미 연결되어 있으면
         {
             UIManager.Instance.ShowNotification("이미 연결되었다.");
             return;
@@ -68,10 +70,11 @@ public class Pipe : MonoBehaviour, IInteractable
             return;
         }
 
-        if (isConnected) return;
-        isConnected = true;
+        if (!isBroken) return; // ★ 중복 방지 (이미 연결되어 있으면 리턴)
 
+        isBroken = false; // ★ 연결 완료 (false = 정상)
         Debug.Log("Pipe: 연결 완료! GameManager에 보고합니다.");
+
         UIManager.Instance.ShowNotification("파이프를 연결했다.");
 
         if (gameManager != null)
@@ -80,11 +83,10 @@ public class Pipe : MonoBehaviour, IInteractable
         }
     }
 
-    // [GameManager가 호출할 함수]
-    // Day 4, Day 11이 되면 GameManager가 호출해서 강제로 '연결 해제' 시킴
+    // ★ GameManager가 호출할 함수 (4일차, 11일차에 고장)
     public void BreakPipe()
     {
-        isConnected = false;
-        Debug.Log("Pipe.cs: 파이프 연결 해제! (isConnected = false)");
+        isBroken = true; // ★ true = 연결 해제됨 (고장)
+        Debug.Log("Pipe.cs: 파이프 연결 해제! (isBroken = true)");
     }
 }

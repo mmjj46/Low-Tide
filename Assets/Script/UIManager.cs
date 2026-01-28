@@ -2,59 +2,123 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 
-// 역할: "3초 알림"을 전담합니다. (알림 메시지 충돌 문제 해결사)
 public class UIManager : MonoBehaviour
 {
-    // 1. (연결 3) 3초 알림용 UI 텍스트
+    [Header("UI 연결")]
+    public GameObject notificationPanel;
     public TextMeshProUGUI notificationText;
-    public float displayTime = 3f;
 
-    // '싱글톤' 패턴: 다른 스크립트가 UIManager.Instance로 쉽게 접근하게 함
+    [Header("설정")]
+    [Range(0.5f, 5f)] // ★ 슬라이더로 제한
+    public float displayTime = 1f;
+
     public static UIManager Instance { get; private set; }
 
     private Coroutine currentNotificationCoroutine;
 
     void Awake()
     {
-        // UIManager는 씬에 오직 하나만 존재하도록 보장
+        // 싱글톤 설정
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
-        else
+
+        Instance = this;
+
+        // ★ 필수 컴포넌트 확인
+        if (notificationPanel == null)
         {
-            Instance = this;
+            Debug.LogError("UIManager: notificationPanel이 연결되지 않았습니다!");
         }
+
+        if (notificationText == null)
+        {
+            Debug.LogError("UIManager: notificationText가 연결되지 않았습니다!");
+        }
+
+        // 시작 시 알림창 비활성화
+        if (notificationPanel != null)
+            notificationPanel.SetActive(false);
     }
 
-    // 다른 모든 스크립트가 "알림"을 띄울 때 이 함수를 호출
+    /// <summary>
+    /// 알림 메시지를 표시합니다.
+    /// </summary>
+    /// <param name="message">표시할 메시지</param>
+    /// <param name="onComplete">알림 종료 후 실행할 콜백</param>
     public void ShowNotification(string message, System.Action onComplete = null)
     {
-        // 이전에 켜진 3초 타이머(코루틴)가 있다면 즉시 중지
+        // ★ 필수 컴포넌트 체크
+        if (notificationText == null)
+        {
+            Debug.LogError("UIManager: notificationText가 null입니다!");
+            onComplete?.Invoke(); // 콜백은 실행
+            return;
+        }
+
+        // 이전 알림이 진행 중이면 중단
         if (currentNotificationCoroutine != null)
         {
             StopCoroutine(currentNotificationCoroutine);
         }
 
-        // 새로운 3초 타이머 시작
         currentNotificationCoroutine = StartCoroutine(ShowNotificationCoroutine(message, onComplete));
     }
 
     private IEnumerator ShowNotificationCoroutine(string message, System.Action onComplete)
     {
-        notificationText.gameObject.SetActive(true);
+        // 1. 텍스트 설정
         notificationText.text = message;
 
-        // (중요) Time.timeScale이 0이어도 작동하는 Realtime 대기
+        // 2. 패널 활성화
+        if (notificationPanel != null)
+            notificationPanel.SetActive(true);
+        else if (notificationText != null) // ★ 패널이 없으면 텍스트만
+            notificationText.gameObject.SetActive(true);
+
+        // 3. 지정된 시간만큼 대기 (Time.timeScale 무시)
         yield return new WaitForSecondsRealtime(displayTime);
 
-        notificationText.text = "";
-        notificationText.gameObject.SetActive(false);
+        // 4. 패널 비활성화 (자식인 텍스트도 자동으로 꺼짐)
+        if (notificationPanel != null)
+        {
+            notificationPanel.SetActive(false);
+        }
+        else if (notificationText != null) // ★ 패널이 없으면 텍스트만 끄기
+        {
+            notificationText.gameObject.SetActive(false);
+        }
 
-        // 코루틴 종료
+        // 5. 텍스트 내용 초기화
+        notificationText.text = "";
+
+        // 6. 코루틴 참조 해제
         currentNotificationCoroutine = null;
 
-        // (선택적) "잠자기"처럼, 알림이 끝난 후 추가 동작이 필요하면 실행
+        // 7. 완료 콜백 실행
         onComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// 현재 표시 중인 알림을 즉시 숨깁니다.
+    /// </summary>
+    public void HideNotificationImmediate()
+    {
+        if (currentNotificationCoroutine != null)
+        {
+            StopCoroutine(currentNotificationCoroutine);
+            currentNotificationCoroutine = null;
+        }
+
+        if (notificationPanel != null)
+            notificationPanel.SetActive(false);
+
+        if (notificationText != null)
+        {
+            notificationText.text = "";
+            notificationText.gameObject.SetActive(false);
+        }
     }
 }
