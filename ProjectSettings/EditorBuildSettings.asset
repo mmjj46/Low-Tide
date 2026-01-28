@@ -14,4 +14,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/EndScene.unity
     guid: 49da942fb66998944a8dfa73e6c24346
+  - enabled: 1
+    path: Assets/2D/Dot/LineConnecting.unity
+    guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/2D/Pipe/PipeConnecting.unity
+    guid: 4e264383f15d70f4ea5e605cf4f575a3
+  - enabled: 1
+    path: Assets/2D/Pipe_2/Pipe_2.unity
+    guid: 93d34ee1afa99df4c8c6765f1fc2797e
+  - enabled: 1
+    path: Assets/2D/Random/Random.unity
+    guid: 2366d23d4b38f91458b9799857f6c280
   m_configObjects: {}
