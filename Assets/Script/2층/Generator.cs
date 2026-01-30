@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement; // ★ 씬 이동을 위해 필수!
 public class Generator : MonoBehaviour, IInteractable
 {
     public bool isBroken = false;
-    public string miniGameSceneName = "Random"; // 연결할 미니게임 씬 이름
+    public string miniGameSceneName = "PipeConnecting"; // 연결할 미니게임 씬 이름
 
     private string myTargetName = "Generator"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;
