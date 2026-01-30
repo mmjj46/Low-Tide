@@ -971,6 +971,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 1
+  miniGameSceneName: Random
 --- !u!1 &767727714
 GameObject:
   m_ObjectHideFlags: 0
@@ -1210,6 +1211,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 0
+  miniGameSceneName: StainErasing
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1665,6 +1667,10 @@ PrefabInstance:
       value: 2-window wood
       objectReference: {fileID: 0}
     - target: {fileID: -1807970279642858887, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -1807970279642858887, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
@@ -1672,6 +1678,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: bfce1fde2b8c9bd4da3f729b5a3f315f, type: 2}
+    - target: {fileID: -1660384031183063813, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -1660384031183063813, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -2793,6 +2803,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 1
+  miniGameSceneName: Random
 --- !u!64 &1388630140
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2828,6 +2839,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 0
+  miniGameSceneName: StainErasing
+  brokenGraphicRenderer: {fileID: 1388630143}
+--- !u!23 &1388630143 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -1660384031183063813, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+  m_PrefabInstance: {fileID: 1261525350}
+  m_PrefabAsset: {fileID: 0}
 --- !u!65 &1436625100
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2982,7 +3000,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   notificationPanel: {fileID: 2127541363}
   notificationText: {fileID: 299651762}
-  displayTime: 3
+  displayTime: 1
 --- !u!1 &1530035205
 GameObject:
   m_ObjectHideFlags: 0
@@ -3381,6 +3399,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 0
+  miniGameSceneName: Dot
 --- !u!64 &1937795418
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3708,6 +3727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 0
+  miniGameSceneName: Random
 --- !u!65 &2065270268
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3927,7 +3947,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 115}
+  m_AnchoredPosition: {x: 0, y: 100}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2127541365
