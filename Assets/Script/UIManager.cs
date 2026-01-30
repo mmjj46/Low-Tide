@@ -9,8 +9,8 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI notificationText;
 
     [Header("설정")]
-    [Range(0.5f, 5f)] // ★ 슬라이더로 제한
-    public float displayTime = 1f;
+    [Range(0.5f, 5f)]
+    public float defaultDisplayTime = 1.5f; // 기본 시간
 
     public static UIManager Instance { get; private set; }
 
@@ -18,7 +18,6 @@ public class UIManager : MonoBehaviour
 
     void Awake()
     {
-        // 싱글톤 설정
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -27,83 +26,65 @@ public class UIManager : MonoBehaviour
 
         Instance = this;
 
-        // ★ 필수 컴포넌트 확인
-        if (notificationPanel == null)
-        {
-            Debug.LogError("UIManager: notificationPanel이 연결되지 않았습니다!");
-        }
+        if (notificationPanel == null) Debug.LogError("UIManager: notificationPanel 없음!");
+        if (notificationText == null) Debug.LogError("UIManager: notificationText 없음!");
 
-        if (notificationText == null)
-        {
-            Debug.LogError("UIManager: notificationText가 연결되지 않았습니다!");
-        }
-
-        // 시작 시 알림창 비활성화
         if (notificationPanel != null)
             notificationPanel.SetActive(false);
     }
 
     /// <summary>
-    /// 알림 메시지를 표시합니다.
+    /// ★ [핵심] 시간을 직접 지정할 수 있는 함수 (오류 해결 포인트)
+    /// duration에 숫자를 넣으면 그 시간만큼만 뜹니다.
     /// </summary>
-    /// <param name="message">표시할 메시지</param>
-    /// <param name="onComplete">알림 종료 후 실행할 콜백</param>
-    public void ShowNotification(string message, System.Action onComplete = null)
+    public void ShowNotification(string message, float duration = -1f, System.Action onComplete = null)
     {
-        // ★ 필수 컴포넌트 체크
+        // 시간을 안 적었거나(-1), 0보다 작으면 기본 시간(defaultDisplayTime) 사용
+        float timeToWait = (duration > 0) ? duration : defaultDisplayTime;
+
         if (notificationText == null)
         {
-            Debug.LogError("UIManager: notificationText가 null입니다!");
-            onComplete?.Invoke(); // 콜백은 실행
+            onComplete?.Invoke();
             return;
         }
 
-        // 이전 알림이 진행 중이면 중단
         if (currentNotificationCoroutine != null)
         {
             StopCoroutine(currentNotificationCoroutine);
         }
 
-        currentNotificationCoroutine = StartCoroutine(ShowNotificationCoroutine(message, onComplete));
+        currentNotificationCoroutine = StartCoroutine(ShowNotificationCoroutine(message, timeToWait, onComplete));
     }
 
-    private IEnumerator ShowNotificationCoroutine(string message, System.Action onComplete)
+    // 기존 코드들과의 호환성을 위한 오버로딩 (시간 안 적었을 때)
+    public void ShowNotification(string message, System.Action onComplete)
     {
-        // 1. 텍스트 설정
+        ShowNotification(message, -1f, onComplete);
+    }
+
+    private IEnumerator ShowNotificationCoroutine(string message, float duration, System.Action onComplete)
+    {
         notificationText.text = message;
 
-        // 2. 패널 활성화
         if (notificationPanel != null)
             notificationPanel.SetActive(true);
-        else if (notificationText != null) // ★ 패널이 없으면 텍스트만
+        else if (notificationText != null)
             notificationText.gameObject.SetActive(true);
 
-        // 3. 지정된 시간만큼 대기 (Time.timeScale 무시)
-        yield return new WaitForSecondsRealtime(displayTime);
+        // 받아온 시간(duration)만큼 대기
+        yield return new WaitForSecondsRealtime(duration);
 
-        // 4. 패널 비활성화 (자식인 텍스트도 자동으로 꺼짐)
         if (notificationPanel != null)
-        {
             notificationPanel.SetActive(false);
-        }
-        else if (notificationText != null) // ★ 패널이 없으면 텍스트만 끄기
-        {
+        else if (notificationText != null)
             notificationText.gameObject.SetActive(false);
-        }
 
-        // 5. 텍스트 내용 초기화
         notificationText.text = "";
-
-        // 6. 코루틴 참조 해제
         currentNotificationCoroutine = null;
 
-        // 7. 완료 콜백 실행
         onComplete?.Invoke();
     }
 
-    /// <summary>
-    /// 현재 표시 중인 알림을 즉시 숨깁니다.
-    /// </summary>
     public void HideNotificationImmediate()
     {
         if (currentNotificationCoroutine != null)

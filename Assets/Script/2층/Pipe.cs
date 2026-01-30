@@ -7,7 +7,7 @@ public class Pipe : MonoBehaviour, IInteractable
 
     // ★ 파이프 미니게임 씬 이름 (Dot 게임으로 추정되어 "Dot"으로 설정함)
     // 만약 씬 이름이 다르다면 유니티 인스펙터에서 수정해주세요!
-    public string miniGameSceneName = "Dot";
+    public string miniGameSceneName = "Pipe_2";
 
     private string myTargetName = "Pipe"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;

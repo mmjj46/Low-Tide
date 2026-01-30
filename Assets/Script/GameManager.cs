@@ -35,6 +35,11 @@ public class GameManager : MonoBehaviour
     private int currentDay = 1;
     private bool isTodayMissionComplete = false;
 
+    // ★ [추가 1] 개발자 테스트용 변수 (인스펙터에서 4로 설정하면 4일차 시작!)
+    [Header("--- Dev Test ---")]
+    [Range(1, 15)]
+    public int debugStartDay = 1;
+
     void Awake()
     {
         savePath = Application.persistentDataPath + "/savefile.json";
@@ -86,9 +91,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 미니게임 성공 후 해당 Device 수리 처리
-    /// </summary>
     private void ProcessMiniGameReturn(string deviceName)
     {
         Debug.Log($"[ProcessMiniGameReturn] {deviceName} 수리 처리");
@@ -98,7 +100,7 @@ public class GameManager : MonoBehaviour
             case "WaterPurifier":
                 if (waterPurifierObject != null)
                 {
-                    waterPurifierObject.isBroken = true; // 강제로 고장 상태로
+                    waterPurifierObject.isBroken = true;
                     waterPurifierObject.ForceFixFromMiniGame();
                 }
                 break;
@@ -256,40 +258,32 @@ public class GameManager : MonoBehaviour
 
     private void RestoreObjectStates(SaveData data)
     {
-        if (data.waterPurifierBroken)
-            waterPurifierObject?.BreakPurifier();
-
-        if (data.foodDeviceBroken)
-            foodDeviceObject?.BreakDevice();
-
-        if (data.wallBroken)
-            wallObject?.BreakWall();
-
-        if (data.pipeBroken)
-            pipeObject?.BreakPipe();
-
-        if (data.generatorBroken)
-            generatorObject?.BreakGenerator();
-
-        if (data.telescopeBroken)
-            telescopeObject?.BreakTelescope();
-
-        if (data.communicateBroken)
-            communicateObject?.BreakCommunicate();
-
-        if (data.lantonBroken)
-            lantonObject?.BreakLanton();
+        if (data.waterPurifierBroken) waterPurifierObject?.BreakPurifier();
+        if (data.foodDeviceBroken) foodDeviceObject?.BreakDevice();
+        if (data.wallBroken) wallObject?.BreakWall();
+        if (data.pipeBroken) pipeObject?.BreakPipe();
+        if (data.generatorBroken) generatorObject?.BreakGenerator();
+        if (data.telescopeBroken) telescopeObject?.BreakTelescope();
+        if (data.communicateBroken) communicateObject?.BreakCommunicate();
+        if (data.lantonBroken) lantonObject?.BreakLanton();
 
         Debug.Log("오브젝트 상태 복원 완료");
     }
 
     private void StartNewGame()
     {
-        currentDay = 1;
+        // ★ [변경] 테스트용 시작 날짜 적용
+        currentDay = debugStartDay;
         isTodayMissionComplete = false;
+
         RefreshGameStat(true);
+
+        // ★ 테스트 시작 시 바로 저장 (해야 꼬이지 않음)
+        SaveGameData();
+        Debug.Log($"[테스트 모드] Day {currentDay}로 시작합니다!");
     }
 
+    // ★ [수정] 다음 날로 넘어가는 함수 (빠른 속도 적용)
     public void GoToNextDay()
     {
         if (!IsTodayMissionComplete())
@@ -298,50 +292,41 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // 코루틴 시작 (속도 조절을 위해)
+        StartCoroutine(ProcessNextDaySequence());
+    }
+
+    // ★ [추가] 다음 날로 넘어가는 로직 (0.5초 대기)
+    private IEnumerator ProcessNextDaySequence()
+    {
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.", () =>
-            {
-                currentDay++;
-                isTodayMissionComplete = false;
-                RefreshGameStat(true);
-                SaveGameData();
-            });
+            // 0.5초만 보여주라고 요청 (UIManager 수정본 필요)
+            UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.", 0.5f, null);
         }
-        else
-        {
-            currentDay++;
-            isTodayMissionComplete = false;
-            RefreshGameStat(true);
-            SaveGameData();
-        }
+
+        // 실제 로직 대기 시간 (0.5초 후 바로 넘어감)
+        yield return new WaitForSeconds(0.5f);
+
+        currentDay++;
+        isTodayMissionComplete = false;
+
+        RefreshGameStat(true);
+        SaveGameData();
+
+        Debug.Log($"Day {currentDay} 시작!");
     }
 
     private void CheckForNewDayEvents()
     {
-        if (currentDay == 1 || currentDay == 8)
-            waterPurifierObject?.BreakPurifier();
-
-        if (currentDay == 2 || currentDay == 9)
-            foodDeviceObject?.BreakDevice();
-
-        if (currentDay == 3 || currentDay == 10)
-            wallObject?.BreakWall();
-
-        if (currentDay == 4 || currentDay == 11)
-            pipeObject?.BreakPipe();
-
-        if (currentDay == 5 || currentDay == 12)
-            generatorObject?.BreakGenerator();
-
-        if (currentDay == 6 || currentDay == 13)
-            telescopeObject?.BreakTelescope();
-
-        if (currentDay == 7 || currentDay == 14)
-            communicateObject?.BreakCommunicate();
-
-        if (currentDay == 15)
-            lantonObject?.BreakLanton();
+        if (currentDay == 1 || currentDay == 8) waterPurifierObject?.BreakPurifier();
+        if (currentDay == 2 || currentDay == 9) foodDeviceObject?.BreakDevice();
+        if (currentDay == 3 || currentDay == 10) wallObject?.BreakWall();
+        if (currentDay == 4 || currentDay == 11) pipeObject?.BreakPipe();
+        if (currentDay == 5 || currentDay == 12) generatorObject?.BreakGenerator();
+        if (currentDay == 6 || currentDay == 13) telescopeObject?.BreakTelescope();
+        if (currentDay == 7 || currentDay == 14) communicateObject?.BreakCommunicate();
+        if (currentDay == 15) lantonObject?.BreakLanton();
     }
 
     public void OnDeviceFixed(string deviceName)
