@@ -1300,7 +1300,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.85, z: 0}
-  m_LocalScale: {x: 1, y: 0.6, z: 1}
+  m_LocalScale: {x: 1, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2122407657}
@@ -2803,7 +2803,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isBroken: 1
-  miniGameSceneName: Random
+  miniGameSceneName: LineConnecting
 --- !u!64 &1388630140
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3188,7 +3188,7 @@ MonoBehaviour:
   lantonObject: {fileID: 743043021}
   weatherManager: {fileID: 1530035206}
   playerTransform: {fileID: 2122407657}
-  debugStartDay: 4
+  debugStartDay: 6
 --- !u!4 &1543384604
 Transform:
   m_ObjectHideFlags: 0
@@ -3907,7 +3907,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 2.4, z: 1.8}
-  m_LocalScale: {x: 0.2, y: 0.8, z: 0.2}
+  m_LocalScale: {x: 0.2, y: 0.6, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 963194228}

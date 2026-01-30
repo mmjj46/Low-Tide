@@ -9,7 +9,7 @@ public class Communicate : MonoBehaviour, IInteractable
 
     // ★ 연결할 미니게임 씬 이름 (기본값 "Random")
     // (만약 통신 관련 미니게임 씬이 따로 있다면 인스펙터에서 이름을 변경하세요!)
-    public string miniGameSceneName = "Random";
+    public string miniGameSceneName = "LineConnecting";
 
     private string myTargetName = "Communicate"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;

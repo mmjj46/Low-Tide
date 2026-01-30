@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // ★ 1. 씬 이동을 위해 필수!
 using System.Collections;
 using System.Collections.Generic;
 
@@ -25,6 +26,10 @@ public class LineManager : MonoBehaviour
 
     void Start()
     {
+        // ★★★ 2. 마우스 커서 잠금 해제 (필수!) ★★★
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         foreach (var mapping in colorMappings)
         {
             if (!colorMapDict.ContainsKey(mapping.colorID))
@@ -59,36 +64,19 @@ public class LineManager : MonoBehaviour
     private void HandleDragStart()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
         Collider2D hitCollider = Physics2D.OverlapPoint(mousePos, dotLayer);
 
         if (hitCollider != null)
         {
-            Debug.Log($"[클릭 성공] 감지된 오브젝트: {hitCollider.name}");
-
             Dot dot = hitCollider.GetComponent<Dot>();
             if (dot != null)
             {
                 if (!dot.isConnected)
                 {
-                    Debug.Log($" -> 시작점 설정 완료: {dot.name} ({dot.colorID})");
                     startDot = dot;
                     CreateLine(startDot.transform.position, dot.colorID);
                 }
-                else
-                {
-                    Debug.Log($" -> 실패: {dot.name}은 이미 연결된 상태입니다.");
-                }
             }
-            else
-            {
-                Debug.Log($" -> 실패: {hitCollider.name}에는 Dot 스크립트가 없습니다.");
-            }
-        }
-        else
-        {
-            // 여기가 계속 뜬다면 Collider나 Layer 문제
-            Debug.Log($"[클릭 실패] 허공을 클릭했습니다. (마우스 위치: {mousePos})");
         }
     }
 
@@ -121,8 +109,6 @@ public class LineManager : MonoBehaviour
     private void HandleDragEnd()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        // 변경점: OverlapPoint 사용
         Collider2D hitCollider = Physics2D.OverlapPoint(mousePos, dotLayer);
         bool connectionSuccessful = false;
 
@@ -161,18 +147,28 @@ public class LineManager : MonoBehaviour
             if (!dot.isConnected) return;
         }
 
-        Debug.Log("LEVEL COMPLETE! 2초 뒤 게임을 종료합니다.");
+        Debug.Log("LEVEL COMPLETE! 2초 뒤 메인 게임으로 돌아갑니다.");
+
+        // 더 이상 조작 못하게 스크립트 비활성화
         this.enabled = false;
-        StartCoroutine(QuitGameAfterDelay(2.0f));
+
+        // ★ 3. 메인 게임 복귀 코루틴 실행
+        StartCoroutine(ReturnToMainGame());
     }
 
-    IEnumerator QuitGameAfterDelay(float delay)
+    // ★ 4. 메인 게임 복귀 및 저장 로직
+    IEnumerator ReturnToMainGame()
     {
-        yield return new WaitForSeconds(delay);
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        // 2초 대기 (완료된 화면 감상)
+        yield return new WaitForSeconds(0.5f);
+
+        Debug.Log("메인 게임으로 이동 중...");
+
+        // 성공 기록 저장 (GameManager가 확인용)
+        PlayerPrefs.SetInt("MiniGameSuccess", 1);
+        PlayerPrefs.Save();
+
+        // GameScene 로드 (씬 이름이 다르다면 수정하세요!)
+        SceneManager.LoadScene("GameScene");
     }
 }
