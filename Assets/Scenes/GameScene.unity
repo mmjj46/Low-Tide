@@ -1320,6 +1320,7 @@ MonoBehaviour:
   interactionDistance: 3
   interactionUI: {fileID: 2020272832}
   interactionText: {fileID: 2017057530}
+  interactSound: {fileID: 8300000, guid: 8edb5ca87bfbddc419f84adc6813e42c, type: 3}
 --- !u!64 &1074282378
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1586,6 +1587,10 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
+    - target: {fileID: -7388296771895361772, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_TagString
+      value: Stairs
+      objectReference: {fileID: 0}
     - target: {fileID: -7371950968139528420, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -1602,6 +1607,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[1]
       value: 
       objectReference: {fileID: 2100000, guid: 3bb289066bc8a9d4e92203577c16af48, type: 2}
+    - target: {fileID: -5691720101011513129, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_TagString
+      value: Stairs
+      objectReference: {fileID: 0}
     - target: {fileID: -5023822544577000310, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -1830,6 +1839,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[1]
       value: 
       objectReference: {fileID: 2100000, guid: acb61ccab74920b4b8630c79cc8ed093, type: 2}
+    - target: {fileID: 4146275628252452872, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_TagString
+      value: Stairs
+      objectReference: {fileID: 0}
     - target: {fileID: 4456749430756002239, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -3188,7 +3201,7 @@ MonoBehaviour:
   lantonObject: {fileID: 743043021}
   weatherManager: {fileID: 1530035206}
   playerTransform: {fileID: 2122407657}
-  debugStartDay: 6
+  debugStartDay: 8
 --- !u!4 &1543384604
 Transform:
   m_ObjectHideFlags: 0
@@ -3798,6 +3811,7 @@ GameObject:
   - component: {fileID: 2122407655}
   - component: {fileID: 2122407653}
   - component: {fileID: 2122407652}
+  - component: {fileID: 2122407658}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -3913,6 +3927,27 @@ Transform:
   - {fileID: 963194228}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2122407658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2122407651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60386d6490264e448a715042b8f4d28a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stepInterval: 0.5
+  volume: 0.5
+  floorSounds:
+  - {fileID: 8300000, guid: a737b3ed50ed19246a7073ca90ac89f2, type: 3}
+  - {fileID: 8300000, guid: cdee794a4a2118947b4ba34252fa48c6, type: 3}
+  - {fileID: 8300000, guid: 2a608065bb05d5448acc8b51deba6f4e, type: 3}
+  stairSounds:
+  - {fileID: 8300000, guid: 168f101210a65b94e8f234f97c0adfcf, type: 3}
+  - {fileID: 8300000, guid: 6b1cfc6646f552c4ebfb2bb9ccff445d, type: 3}
 --- !u!1 &2127541363
 GameObject:
   m_ObjectHideFlags: 0

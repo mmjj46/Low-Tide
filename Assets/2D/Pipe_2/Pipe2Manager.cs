@@ -13,6 +13,10 @@ public class Pipe2Manager : MonoBehaviour
     [Header("게임 상태")]
     public bool isGameOver = false;
 
+    [Header("사운드")]
+    public AudioClip clearSound; // ★ 1. 효과음 연결
+    private AudioSource audioSource;
+
     void Awake()
     {
         instance = this;
@@ -23,6 +27,9 @@ public class Pipe2Manager : MonoBehaviour
         // 1. 마우스 커서 설정
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
         // 2. 씬에 있는 모든 파이프를 자동으로 찾아서 배열에 넣기
         // (혹시 인스펙터가 비어있어도 여기서 채워줍니다)
@@ -93,7 +100,9 @@ public class Pipe2Manager : MonoBehaviour
 
     IEnumerator ReturnToMainGame()
     {
-        yield return new WaitForSeconds(0.5f);
+        if (clearSound != null) audioSource.PlayOneShot(clearSound);
+
+        yield return new WaitForSeconds(1.0f); // 소리 들을 시간 확보
 
         Debug.Log("메인 게임으로 돌아갑니다.");
 

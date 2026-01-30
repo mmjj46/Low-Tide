@@ -12,6 +12,10 @@ public class RandomManager : MonoBehaviour
     [Header("UI 연결")]
     public List<SpriteSwitch> allSwitches = new List<SpriteSwitch>();
 
+    [Header("사운드")]
+    public AudioClip clearSound; // ★ 1. 효과음 연결
+    private AudioSource audioSource;
+
     public static RandomManager Instance;
 
     void Awake()
@@ -24,6 +28,8 @@ public class RandomManager : MonoBehaviour
     {
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
         // ★ 디버그: 어떤 장치를 수리하러 왔는지 확인
         string target = PlayerPrefs.GetString("MiniGameTarget", "Unknown");
@@ -46,6 +52,7 @@ public class RandomManager : MonoBehaviour
 
     IEnumerator ReturnToMainGame()
     {
+        if (clearSound != null) audioSource.PlayOneShot(clearSound);
         yield return new WaitForSeconds(0.5f);
 
         // ★ [수정] 성공 표시만 하고 복귀 (Target은 삭제하지 않음)

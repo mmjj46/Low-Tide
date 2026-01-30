@@ -17,11 +17,18 @@ public class StainManager : MonoBehaviour
     [Header("최종 완료 이벤트")]
     public UnityEvent onAllCleared;
 
+    [Header("사운드")]
+    public AudioClip clearSound; // ★ 1. 효과음 연결
+    private AudioSource audioSource;
+
     void Start()
     {
         // 커서 설정
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
         Time.timeScale = 1f;
         if (stains.Length > 0)
@@ -100,6 +107,7 @@ public class StainManager : MonoBehaviour
     private void ReturnToMainGame()
     {
         Debug.Log("미니게임 성공! 메인으로 돌아갑니다.");
+        if (clearSound != null) audioSource.PlayOneShot(clearSound);
 
         // 1. 성공했다고 기록 (GameManager가 이걸 보고 수리 완료 처리함)
         PlayerPrefs.SetInt("MiniGameSuccess", 1);

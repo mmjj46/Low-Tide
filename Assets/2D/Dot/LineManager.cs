@@ -24,6 +24,10 @@ public class LineManager : MonoBehaviour
     private GameObject currentLine;
     private LineRenderer currentLineRenderer;
 
+    [Header("사운드")]
+    public AudioClip clearSound; // ★ 1. 여기에 효과음 파일을 드래그해서 넣으세요
+    private AudioSource audioSource;
+
     void Start()
     {
         // ★★★ 2. 마우스 커서 잠금 해제 (필수!) ★★★
@@ -42,6 +46,9 @@ public class LineManager : MonoBehaviour
         allDots.AddRange(foundDots);
 
         Debug.Log($"[게임 시작] 발견된 점 개수: {allDots.Count}개");
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
     }
 
     void Update()
@@ -148,6 +155,11 @@ public class LineManager : MonoBehaviour
         }
 
         Debug.Log("LEVEL COMPLETE! 2초 뒤 메인 게임으로 돌아갑니다.");
+        if (clearSound != null) audioSource.PlayOneShot(clearSound);
+
+        PlayerPrefs.SetInt("MiniGameSuccess", 1);
+        PlayerPrefs.Save();
+        SceneManager.LoadScene("GameScene");
 
         // 더 이상 조작 못하게 스크립트 비활성화
         this.enabled = false;

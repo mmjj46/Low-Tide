@@ -473,6 +473,7 @@ MonoBehaviour:
   - {fileID: 2080872483}
   clearUI: {fileID: 547066910}
   isGameOver: 0
+  clearSound: {fileID: 8300000, guid: 326816b3e3d29b5458f64f5f10708dbe, type: 3}
 --- !u!1 &614799017
 GameObject:
   m_ObjectHideFlags: 0

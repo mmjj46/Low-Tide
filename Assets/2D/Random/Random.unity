@@ -173,6 +173,7 @@ MonoBehaviour:
   - {fileID: 1356505754}
   - {fileID: 460714617}
   - {fileID: 507389233}
+  clearSound: {fileID: 8300000, guid: 326816b3e3d29b5458f64f5f10708dbe, type: 3}
 --- !u!1 &210085182
 GameObject:
   m_ObjectHideFlags: 0

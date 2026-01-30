@@ -11,6 +11,10 @@ public class PipeGameManager : MonoBehaviour
     public GameObject clearUI;
     public bool isGameOver = false;
 
+    [Header("사운드")]
+    public AudioClip clearSound; // ★ 1. 효과음 연결
+    private AudioSource audioSource;
+
     void Awake()
     {
         instance = this;
@@ -22,6 +26,8 @@ public class PipeGameManager : MonoBehaviour
         // 1인칭 게임에서 넘어왔으면 커서가 잠겨있을 수 있으므로 풀어줍니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
     }
 
     public void CheckWin()
@@ -53,7 +59,8 @@ public class PipeGameManager : MonoBehaviour
     IEnumerator ReturnToMainGame()
     {
         // 클리어 UI를 감상할 시간 2초 주기
-        yield return new WaitForSeconds(2.0f);
+        if (clearSound != null) audioSource.PlayOneShot(clearSound);
+        yield return new WaitForSeconds(1.0f);
 
         Debug.Log("메인 게임으로 돌아갑니다.");
 

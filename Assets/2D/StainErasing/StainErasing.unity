@@ -161,6 +161,7 @@ MonoBehaviour:
   onAllCleared:
     m_PersistentCalls:
       m_Calls: []
+  clearSound: {fileID: 8300000, guid: 326816b3e3d29b5458f64f5f10708dbe, type: 3}
 --- !u!4 &82782189
 Transform:
   m_ObjectHideFlags: 0
