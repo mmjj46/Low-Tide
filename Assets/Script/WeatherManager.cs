@@ -27,7 +27,8 @@ public class WeatherManager : MonoBehaviour
     public AudioClip stormySound;
     public AudioClip foggySound;
 
-    public AudioSource bgmAudioSource;
+    // [삭제됨] 이제 이 친구는 직접 스피커를 들고 다니지 않습니다.
+    // public AudioSource bgmAudioSource; 
 
     [Header("--- 날짜별 날씨 패턴 ---")]
     public WeatherType[] dailyWeatherPattern;
@@ -35,6 +36,7 @@ public class WeatherManager : MonoBehaviour
     // GameManager가 호출하는 함수
     public void SetWeather(int day)
     {
+        // 날씨 패턴 배열 범위 안에서 순환하도록 설정
         int index = (day - 1) % dailyWeatherPattern.Length;
         WeatherType todayWeather = dailyWeatherPattern[index];
 
@@ -67,10 +69,9 @@ public class WeatherManager : MonoBehaviour
 
     void UpdateSound(WeatherType weather)
     {
-        if (bgmAudioSource == null) return;
-
         AudioClip clip = null;
 
+        // 1. 날씨에 맞는 음악 고르기
         switch (weather)
         {
             case WeatherType.Sunny:
@@ -87,12 +88,16 @@ public class WeatherManager : MonoBehaviour
                 break;
         }
 
-        if (bgmAudioSource.clip == clip && bgmAudioSource.isPlaying) return;
-
-        bgmAudioSource.Stop();
-        bgmAudioSource.clip = clip;
-
-        if (clip != null)
-            bgmAudioSource.Play();
+        // 2. [변경] SoundManager에게 "이 음악 틀어줘" 라고 요청하기
+        if (SoundManager.Instance != null)
+        {
+            // PlayBGM 함수 안에 "같은 노래면 다시 안 틈" 기능이 이미 들어있습니다.
+            // 그래서 그냥 던져주기만 하면 알아서 처리합니다!
+            SoundManager.Instance.PlayBGM(clip);
+        }
+        else
+        {
+            Debug.LogWarning("SoundManager가 씬에 없습니다! BGM을 재생할 수 없습니다.");
+        }
     }
 }

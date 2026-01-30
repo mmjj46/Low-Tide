@@ -2,26 +2,26 @@ using UnityEngine;
 
 public class SoundManager : MonoBehaviour
 {
-    // 어디서든 SoundManager.Instance로 부를 수 있게 만드는 '싱글톤' 패턴
     public static SoundManager Instance;
 
-    [Header("UI Sounds (2D)")]
-    public AudioClip clickClip;        // 클릭 소리 넣을 곳
-    public AudioClip hoverClip;        // 마우스 올릴 때 소리 넣을 곳
+    [Header("BGM Settings")]
+    public AudioClip mainBGM;          // ★ 배경음악 파일 넣는 곳
+    [Range(0f, 1f)] public float bgmVolume = 0.5f;
 
-    // 나중에 필요한 소리가 생기면 여기에 계속 추가하면 됩니다.
-    // public AudioClip successClip; 
-    // public AudioClip failClip;
+    [Header("SFX Clips")]
+    public AudioClip clickClip;        // 클릭 소리
+    public AudioClip hoverClip;        // 마우스 올릴 때 소리
 
-    private AudioSource audioSource;
+    // 스피커를 2개 둡니다 (음악용, 효과음용)
+    private AudioSource bgmSource;
+    private AudioSource sfxSource;
 
     void Awake()
     {
-        // SoundManager는 게임 내내 하나만 있어야 하므로 중복 제거
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // 씬이 바껴도 파괴되지 않음
+            DontDestroyOnLoad(gameObject); // 씬 이동해도 파괴 안 됨
         }
         else
         {
@@ -29,20 +29,46 @@ public class SoundManager : MonoBehaviour
             return;
         }
 
-        // 소리를 낼 스피커(AudioSource) 가져오기
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
+        // ★ 스피커 2개 자동 생성 및 설정 ★
+
+        // 1. BGM용 스피커 만들기
+        bgmSource = gameObject.AddComponent<AudioSource>();
+        bgmSource.loop = true;          // 노래는 무한 반복
+        bgmSource.playOnAwake = false;
+        bgmSource.volume = bgmVolume;
+
+        // 2. SFX용 스피커 만들기
+        sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.loop = false;         // 효과음은 한 번만 재생
+
+        // 게임 시작하자마자 BGM 재생
+        PlayBGM(mainBGM);
     }
 
-    // 소리 재생 함수 (외부에서 이걸 호출해서 소리 냄)
+    // ★ 배경음악 재생 함수
+    public void PlayBGM(AudioClip clip)
+    {
+        if (clip == null) return;
+
+        // 이미 같은 노래가 나오고 있다면 다시 틀지 않음 (끊김 방지 핵심!)
+        if (bgmSource.clip == clip && bgmSource.isPlaying) return;
+
+        bgmSource.clip = clip;
+        bgmSource.Play();
+    }
+
+    // ★ 효과음 재생 함수
     public void PlaySFX(AudioClip clip, float volume = 1.0f)
     {
         if (clip != null)
         {
-            audioSource.PlayOneShot(clip, volume);
+            sfxSource.PlayOneShot(clip, volume);
         }
+    }
+
+    // 볼륨 조절이 필요할 때 쓸 함수 (옵션)
+    public void SetBGMVolume(float volume)
+    {
+        bgmSource.volume = volume;
     }
 }

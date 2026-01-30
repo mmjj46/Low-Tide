@@ -1,68 +1,76 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // ★ 씬 이동을 위해 필수!
 
 public class Generator : MonoBehaviour, IInteractable
 {
-    // ★ GameManager가 참조할 고장 상태 (public으로 변경)
-    public bool isBroken = false; // true = 고장남, false = 정상
+    public bool isBroken = false;
+    public string miniGameSceneName = "Random"; // 연결할 미니게임 씬 이름
 
+    private string myTargetName = "Generator"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;
 
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
+
         if (gameManager == null)
         {
             Debug.LogError("Generator: GameManager를 찾을 수 없습니다!");
         }
+
+        // ★ CheckMiniGameReturn 제거! (GameManager가 처리함)
     }
 
+#if UNITY_EDITOR
     void Update()
     {
-        // [임시] 숫자 5키로 수리 (미니게임 완성 전까지)
+        // [테스트] 숫자 5키로 강제 수리 시도
         if (Input.GetKeyDown(KeyCode.Alpha5) && isBroken)
         {
-            Debug.Log("Generator: 5키 감지 -> TryRepair() 호출");
+            Debug.Log("Generator: [테스트] 강제 수리 시도");
             TryRepair();
         }
     }
+#endif
 
-    // F키 (상호작용) - 평소 사용
     public void Interact()
     {
         Debug.Log($"Generator: Interact() 호출됨. isBroken = {isBroken}");
 
-        if (!isBroken) // ★ 고장나지 않았으면 정상 작동
+        if (!isBroken)
         {
             UIManager.Instance.ShowNotification("발전기가 웅웅거리며 작동 중이다.");
         }
-        else // ★ 고장났으면 수리 필요
+        else
         {
-            UIManager.Instance.ShowNotification("발전기가 고장났다. 수리해야 한다.");
-            // (나중에 미니게임 시작 코드 추가)
+            // 고장났으면 수리 시도 (미니게임 이동)
+            TryRepair();
         }
     }
 
-    // 수리 함수 (미니게임이나 다른 방식으로 호출)
+    public void BreakGenerator()
+    {
+        isBroken = true;
+        Debug.Log("Generator: 고장 발생!");
+    }
+
     public void TryRepair()
     {
-        Debug.Log("Generator: TryRepair() 호출됨");
-
-        if (!isBroken) // ★ 이미 수리되어 있으면
+        if (!isBroken)
         {
             UIManager.Instance.ShowNotification("이미 수리되었다.");
             return;
         }
 
-        Fix();
-    }
+        if (gameManager == null)
+        {
+            Debug.LogError("Generator: GameManager가 없습니다!");
+            return;
+        }
 
-    public void Fix()
-    {
-        Debug.Log($"Generator: Fix() 호출됨. 현재 날짜 = {gameManager.GetCurrentDay()}");
-
-        // [추가된 안전장치]
-        // 오늘이 5일차 또는 12일차가 아니라면, 수리를 거부하고 함수 종료
         int currentDay = gameManager.GetCurrentDay();
+
+        // ★ 5일차 또는 12일차가 아니라면, 수리를 거부
         if (currentDay != 5 && currentDay != 12)
         {
             UIManager.Instance.ShowNotification("지금은 이걸 수리할 때가 아니다.");
@@ -70,23 +78,33 @@ public class Generator : MonoBehaviour, IInteractable
             return;
         }
 
-        if (!isBroken) return; // ★ 중복 방지 (이미 수리되어 있으면 리턴)
+        Debug.Log($"Generator: Day {currentDay} - 미니게임 이동");
 
-        isBroken = false; // ★ 수리 완료 (false = 정상)
-        Debug.Log("Generator: 수리 완료! GameManager에 보고합니다.");
+        // 1. 현재 게임 상태 저장
+        gameManager.SaveGameData();
 
+        // 2. "나 Generator 고치러 간다"라고 메모 남기기
+        PlayerPrefs.SetString("MiniGameTarget", myTargetName);
+        PlayerPrefs.SetInt("MiniGameSuccess", 0);
+        PlayerPrefs.Save();
+
+        // 3. 미니게임 씬 로드
+        SceneManager.LoadScene(miniGameSceneName);
+    }
+
+    /// <summary>
+    /// ★ GameManager에서 미니게임 복귀 시 호출하는 메서드
+    /// </summary>
+    public void ForceFixFromMiniGame()
+    {
+        Debug.Log("Generator: 미니게임 성공 - 강제 수리");
+
+        isBroken = false;
         UIManager.Instance.ShowNotification("발전기를 수리했다.");
 
         if (gameManager != null)
         {
-            gameManager.OnDeviceFixed("Generator");
+            gameManager.OnDeviceFixed(myTargetName);
         }
-    }
-
-    // ★ GameManager가 호출할 함수 (5일차, 12일차에 고장)
-    public void BreakGenerator()
-    {
-        isBroken = true; // ★ true = 고장남
-        Debug.Log("Generator.cs: 발전기 고장 발생! (isBroken = true)");
     }
 }

@@ -22,25 +22,24 @@ public class RandomManager : MonoBehaviour
 
     void Start()
     {
-        // 1. 커서를 보이게 설정
         Cursor.visible = true;
-
-        // 2. 커서 잠금을 해제 (화면 밖으로 나갈 수 있게/자유롭게 움직이게)
         Cursor.lockState = CursorLockMode.None;
+
+        // ★ 디버그: 어떤 장치를 수리하러 왔는지 확인
+        string target = PlayerPrefs.GetString("MiniGameTarget", "Unknown");
+        Debug.Log($"[RandomManager] 미니게임 시작 - 타겟: {target}");
     }
 
     public void CheckGameClear()
     {
         if (allSwitches == null || allSwitches.Count == 0) return;
 
-        // 모두 켜졌는지 확인
         foreach (var sw in allSwitches)
         {
             if (sw == null || !sw.isSpriteChanged)
-                return; // 하나라도 안 켜졌으면 종료
+                return;
         }
 
-        // 모두 켜졌으면 클리어!
         Debug.Log("게임 클리어! 0.5초 뒤 복귀합니다.");
         StartCoroutine(ReturnToMainGame());
     }
@@ -49,9 +48,13 @@ public class RandomManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
-        // ★ 성공 표시하고 메인 씬으로 복귀
+        // ★ [수정] 성공 표시만 하고 복귀 (Target은 삭제하지 않음)
+        // Device 스크립트에서 확인 후 초기화할 것
         PlayerPrefs.SetInt("MiniGameSuccess", 1);
         PlayerPrefs.Save();
+
+        string target = PlayerPrefs.GetString("MiniGameTarget", "Unknown");
+        Debug.Log($"[RandomManager] 미니게임 성공! 타겟: {target}");
 
         SceneManager.LoadScene("GameScene");
     }

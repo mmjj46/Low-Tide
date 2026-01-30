@@ -6,32 +6,31 @@ public class WaterPurifier : MonoBehaviour, IInteractable
     public bool isBroken = false;
     public string miniGameSceneName = "Random";
 
+    private string myTargetName = "WaterPurifier";
     private GameManager gameManager;
 
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
 
-        // 미니게임 성공하고 돌아왔는지 확인
-        if (PlayerPrefs.GetString("MiniGameTarget") == "WaterPurifier" &&
-            PlayerPrefs.GetInt("MiniGameSuccess") == 1)
+        if (gameManager == null)
         {
-            // ★ 먼저 초기화 (중복 방지)
-            PlayerPrefs.SetInt("MiniGameSuccess", 0);
-            PlayerPrefs.SetString("MiniGameTarget", "");
-            PlayerPrefs.Save();
-
-            Fix();
+            Debug.LogError("WaterPurifier: GameManager를 찾을 수 없습니다!");
         }
+
+        // ★ CheckMiniGameReturn 제거! GameManager가 처리함
     }
 
+#if UNITY_EDITOR
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha1) && isBroken)
         {
+            Debug.Log("WaterPurifier: [테스트] 강제 수리 시도");
             TryRepair();
         }
     }
+#endif
 
     public void Interact()
     {
@@ -48,7 +47,7 @@ public class WaterPurifier : MonoBehaviour, IInteractable
     public void BreakPurifier()
     {
         isBroken = true;
-        Debug.Log("WaterPurifier: 고장남!");
+        Debug.Log("WaterPurifier: 고장 발생!");
     }
 
     public void TryRepair()
@@ -59,37 +58,44 @@ public class WaterPurifier : MonoBehaviour, IInteractable
             return;
         }
 
+        if (gameManager == null)
+        {
+            Debug.LogError("WaterPurifier: GameManager가 없습니다!");
+            return;
+        }
+
         int currentDay = gameManager.GetCurrentDay();
+
         if (currentDay != 1 && currentDay != 8)
         {
             UIManager.Instance.ShowNotification("지금은 이걸 수리할 때가 아니다.");
             return;
         }
 
-        Debug.Log("미니게임으로 이동합니다...");
+        Debug.Log($"WaterPurifier: Day {currentDay} - 미니게임 이동");
 
         gameManager.SaveGameData();
 
-        // ★ 타겟 설정하고 씬 전환
-        PlayerPrefs.SetString("MiniGameTarget", "WaterPurifier");
+        PlayerPrefs.SetString("MiniGameTarget", myTargetName);
         PlayerPrefs.SetInt("MiniGameSuccess", 0);
         PlayerPrefs.Save();
 
         SceneManager.LoadScene(miniGameSceneName);
     }
 
-    public void Fix()
+    /// <summary>
+    /// ★ GameManager에서 미니게임 복귀 시 호출하는 메서드
+    /// </summary>
+    public void ForceFixFromMiniGame()
     {
-        if (!isBroken) return; // 이미 수리됨
+        Debug.Log("WaterPurifier: 미니게임 성공 - 강제 수리");
 
         isBroken = false;
-
-        UIManager.Instance.ShowNotification("정수기 수리에 성공했다!");
+        UIManager.Instance.ShowNotification("정수기를 수리했다.");
 
         if (gameManager != null)
         {
-            gameManager.OnDeviceFixed("WaterPurifier");
-            gameManager.SaveGameData();
+            gameManager.OnDeviceFixed(myTargetName);
         }
     }
 }

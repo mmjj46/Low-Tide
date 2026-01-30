@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -27,47 +28,137 @@ public class GameManager : MonoBehaviour
     public WeatherManager weatherManager;
 
     [Header("Save Settings")]
-    public Transform playerTransform; // Inspector에서 플레이어를 넣어주세요!
+    public Transform playerTransform;
     private string savePath;
 
     [Header("Game State")]
     private int currentDay = 1;
     private bool isTodayMissionComplete = false;
-    private bool isLoadingGame = false; // ★ 로드 중 플래그
+
+    void Awake()
+    {
+        savePath = Application.persistentDataPath + "/savefile.json";
+    }
 
     void Start()
     {
-        // 1. 저장 경로 설정
-        savePath = Application.persistentDataPath + "/savefile.json";
+        StartCoroutine(Initialize());
+    }
 
-        // 2. StartScene에서 "이어하기" 신호를 보냈는지 확인
-        int isLoad = PlayerPrefs.GetInt("IsLoadGame", 0);
+    IEnumerator Initialize()
+    {
+        // ★ 1단계: 미니게임 복귀 확인 및 처리
+        string miniGameTarget = PlayerPrefs.GetString("MiniGameTarget", "");
+        int miniGameSuccess = PlayerPrefs.GetInt("MiniGameSuccess", 0);
 
-        if (isLoad == 1)
+        if (!string.IsNullOrEmpty(miniGameTarget) && miniGameSuccess == 1)
         {
-            // 이어하기라면 저장된 파일을 불러옴
+            Debug.Log($"[GameManager] 미니게임 복귀 감지: {miniGameTarget}");
+
+            // 저장 파일 로드
             LoadGameData();
-            PlayerPrefs.SetInt("IsLoadGame", 0); // ★ 플래그 리셋
+
+            // ★ 2프레임 대기 (LoadGameData의 RestoreObjectStates 완료 대기)
+            yield return null;
+            yield return null;
+
+            // 해당 Device 수리 처리
+            ProcessMiniGameReturn(miniGameTarget);
+
+            // PlayerPrefs 초기화
+            PlayerPrefs.SetString("MiniGameTarget", "");
+            PlayerPrefs.SetInt("MiniGameSuccess", 0);
             PlayerPrefs.Save();
         }
+        // ★ 2단계: 이어하기
+        else if (PlayerPrefs.GetInt("IsLoadGame", 0) == 1)
+        {
+            Debug.Log("[GameManager] 이어하기");
+            LoadGameData();
+            PlayerPrefs.SetInt("IsLoadGame", 0);
+            PlayerPrefs.Save();
+        }
+        // ★ 3단계: 새 게임
         else
         {
-            // 새 게임이라면 기본 초기화 진행
-            currentDay = 1;
-            isTodayMissionComplete = false;
-
-            // UI 및 이벤트 초기화
-            RefreshGameStat(true); // ★ 새 게임은 이벤트 발생
+            Debug.Log("[GameManager] 새 게임 시작");
+            StartNewGame();
         }
     }
 
-    // ★ 상태를 화면에 적용하는 함수
+    /// <summary>
+    /// 미니게임 성공 후 해당 Device 수리 처리
+    /// </summary>
+    private void ProcessMiniGameReturn(string deviceName)
+    {
+        Debug.Log($"[ProcessMiniGameReturn] {deviceName} 수리 처리");
+
+        switch (deviceName)
+        {
+            case "WaterPurifier":
+                if (waterPurifierObject != null)
+                {
+                    waterPurifierObject.isBroken = true; // 강제로 고장 상태로
+                    waterPurifierObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "FoodDevice":
+                if (foodDeviceObject != null)
+                {
+                    foodDeviceObject.isBroken = true;
+                    foodDeviceObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Wall":
+                if (wallObject != null)
+                {
+                    wallObject.isBroken = true;
+                    wallObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Pipe":
+                if (pipeObject != null)
+                {
+                    pipeObject.isBroken = true;
+                    pipeObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Generator":
+                if (generatorObject != null)
+                {
+                    generatorObject.isBroken = true;
+                    generatorObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Telescope":
+                if (telescopeObject != null)
+                {
+                    telescopeObject.isBroken = true;
+                    telescopeObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Communicate":
+                if (communicateObject != null)
+                {
+                    communicateObject.isBroken = true;
+                    communicateObject.ForceFixFromMiniGame();
+                }
+                break;
+            case "Lanton":
+                if (lantonObject != null)
+                {
+                    lantonObject.isBroken = true;
+                    lantonObject.ForceFixFromMiniGame();
+                }
+                break;
+        }
+    }
+
     void RefreshGameStat(bool triggerEvents = false)
     {
         UpdateTaskUI();
         UpdateDayUI();
 
-        // ★ 새 게임이거나 다음 날로 넘어갈 때만 이벤트 발생
         if (triggerEvents)
         {
             CheckForNewDayEvents();
@@ -77,9 +168,6 @@ public class GameManager : MonoBehaviour
             weatherManager.SetWeather(currentDay);
     }
 
-    // =========================================================
-    // ★ [저장 기능] 오브젝트 상태 포함하여 저장
-    // =========================================================
     public void SaveGameData()
     {
         if (playerTransform == null)
@@ -90,28 +178,24 @@ public class GameManager : MonoBehaviour
 
         try
         {
-            // ★ 각 오브젝트의 고장 상태 수집
-            bool waterBroken = waterPurifierObject != null && waterPurifierObject.isBroken;
-            bool foodBroken = foodDeviceObject != null && foodDeviceObject.isBroken;
-            bool wallBroken = wallObject != null && wallObject.isBroken;
-            bool pipeBroken = pipeObject != null && pipeObject.isBroken;
-            bool generatorBroken = generatorObject != null && generatorObject.isBroken;
-            bool telescopeBroken = telescopeObject != null && telescopeObject.isBroken;
-            bool communicateBroken = communicateObject != null && communicateObject.isBroken;
-            bool lantonBroken = lantonObject != null && lantonObject.isBroken;
-
-            // 1. 현재 상태를 데이터 봉투에 담기 (오브젝트 상태 포함)
             SaveData data = new SaveData(
-                currentDay, isTodayMissionComplete, playerTransform.position,
-                waterBroken, foodBroken, wallBroken, pipeBroken,
-                generatorBroken, telescopeBroken, communicateBroken, lantonBroken
+                currentDay,
+                isTodayMissionComplete,
+                playerTransform.position,
+                waterPurifierObject?.isBroken ?? false,
+                foodDeviceObject?.isBroken ?? false,
+                wallObject?.isBroken ?? false,
+                pipeObject?.isBroken ?? false,
+                generatorObject?.isBroken ?? false,
+                telescopeObject?.isBroken ?? false,
+                communicateObject?.isBroken ?? false,
+                lantonObject?.isBroken ?? false
             );
 
-            // 2. JSON 변환 및 파일 쓰기
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(savePath, json);
 
-            Debug.Log($"저장 완료! (Day {currentDay}, 위치: {playerTransform.position})");
+            Debug.Log($"[저장] Day {currentDay}, 미션완료: {isTodayMissionComplete}");
         }
         catch (System.Exception e)
         {
@@ -119,29 +203,20 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // =========================================================
-    // ★ [불러오기 기능] 오브젝트 상태 복원 포함
-    // =========================================================
     public void LoadGameData()
     {
         if (!File.Exists(savePath))
         {
-            Debug.Log("세이브 파일이 없어 새 게임을 시작합니다.");
-            currentDay = 1;
-            isTodayMissionComplete = false;
-            RefreshGameStat(true); // ★ 새 게임처럼 시작
+            Debug.Log("세이브 파일 없음. 새 게임 시작.");
+            StartNewGame();
             return;
         }
 
         try
         {
-            isLoadingGame = true; // ★ 로드 시작
-
-            // 1. 파일 읽기
             string json = File.ReadAllText(savePath);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
-            // 2. 유효성 검사
             if (data == null)
             {
                 Debug.LogError("세이브 데이터 파싱 실패!");
@@ -149,11 +224,11 @@ public class GameManager : MonoBehaviour
                 return;
             }
 
-            // 3. 데이터 적용
             currentDay = data.day;
             isTodayMissionComplete = data.isMissionComplete;
 
-            // 4. 플레이어 위치 이동 (CharacterController 호환)
+            Debug.Log($"[로드] Day {currentDay}, 미션완료: {isTodayMissionComplete}");
+
             if (playerTransform != null)
             {
                 CharacterController cc = playerTransform.GetComponent<CharacterController>();
@@ -169,77 +244,57 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            // ★ 5. 각 오브젝트의 상태 복원
             RestoreObjectStates(data);
-
-            Debug.Log($"로드 완료! Day {currentDay}로 이동합니다. (위치: {data.playerPos})");
-
-            // 6. 화면 갱신 (이벤트는 발생시키지 않음)
-            RefreshGameStat(false); // ★ 로드 시에는 이벤트 발생 안 함
-
-            isLoadingGame = false; // ★ 로드 완료
+            RefreshGameStat(false);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"세이브 파일 로드 실패: {e.Message}");
-            Debug.Log("새 게임으로 시작합니다.");
+            Debug.LogError($"로드 실패: {e.Message}");
             StartNewGame();
         }
     }
 
-    // =========================================================
-    // ★ 오브젝트 상태 복원 메서드
-    // =========================================================
     private void RestoreObjectStates(SaveData data)
     {
-        // 각 오브젝트의 고장 상태 복원
-        // 저장된 상태가 "고장남(true)"이면 고장 메서드 호출
+        if (data.waterPurifierBroken)
+            waterPurifierObject?.BreakPurifier();
 
-        if (data.waterPurifierBroken && waterPurifierObject != null)
-            waterPurifierObject.BreakPurifier();
+        if (data.foodDeviceBroken)
+            foodDeviceObject?.BreakDevice();
 
-        if (data.foodDeviceBroken && foodDeviceObject != null)
-            foodDeviceObject.BreakDevice();
+        if (data.wallBroken)
+            wallObject?.BreakWall();
 
-        if (data.wallBroken && wallObject != null)
-            wallObject.BreakWall();
+        if (data.pipeBroken)
+            pipeObject?.BreakPipe();
 
-        if (data.pipeBroken && pipeObject != null)
-            pipeObject.BreakPipe();
+        if (data.generatorBroken)
+            generatorObject?.BreakGenerator();
 
-        if (data.generatorBroken && generatorObject != null)
-            generatorObject.BreakGenerator();
+        if (data.telescopeBroken)
+            telescopeObject?.BreakTelescope();
 
-        if (data.telescopeBroken && telescopeObject != null)
-            telescopeObject.BreakTelescope();
+        if (data.communicateBroken)
+            communicateObject?.BreakCommunicate();
 
-        if (data.communicateBroken && communicateObject != null)
-            communicateObject.BreakCommunicate();
-
-        if (data.lantonBroken && lantonObject != null)
-            lantonObject.BreakLanton();
+        if (data.lantonBroken)
+            lantonObject?.BreakLanton();
 
         Debug.Log("오브젝트 상태 복원 완료");
     }
 
-    // ★ 새 게임 시작 헬퍼 함수
     private void StartNewGame()
     {
         currentDay = 1;
         isTodayMissionComplete = false;
-        isLoadingGame = false;
         RefreshGameStat(true);
     }
 
-    // =========================================================
-    // ★ 다음 날로 이동 (날짜 변경 후 저장)
-    // =========================================================
     public void GoToNextDay()
     {
         if (!IsTodayMissionComplete())
         {
-            if (UIManager.Instance != null)
-                UIManager.Instance.ShowNotification("오늘의 미션을 먼저 완료하세요!");
+            UIManager.Instance?.ShowNotification("오늘의 미션을 먼저 완료하세요!");
             return;
         }
 
@@ -247,37 +302,23 @@ public class GameManager : MonoBehaviour
         {
             UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.", () =>
             {
-                // 1. 날짜를 먼저 올리고
                 currentDay++;
-
-                // 2. 미션 상태 초기화
                 isTodayMissionComplete = false;
-
-                // 3. 화면 갱신 (이벤트 발생 등)
                 RefreshGameStat(true);
-
-                // 4. ★ 다음 날 아침으로 저장
                 SaveGameData();
             });
         }
         else
         {
-            // UIManager가 없을 때의 경우도 똑같이 순서 변경
             currentDay++;
             isTodayMissionComplete = false;
             RefreshGameStat(true);
-
-            // ★ 여기로 이동
             SaveGameData();
         }
     }
 
-    // =========================================================
-    // ★ 날짜별 이벤트 발생 (고장 처리)
-    // =========================================================
     private void CheckForNewDayEvents()
     {
-        // ★ 각 오브젝트의 고장 메서드 호출
         if (currentDay == 1 || currentDay == 8)
             waterPurifierObject?.BreakPurifier();
 
@@ -303,52 +344,41 @@ public class GameManager : MonoBehaviour
             lantonObject?.BreakLanton();
     }
 
-    // =========================================================
-    // ★ 장치 수리 완료 시 호출
-    // =========================================================
     public void OnDeviceFixed(string deviceName)
     {
+        Debug.Log($"[OnDeviceFixed] {deviceName}, Day={currentDay}, 완료={isTodayMissionComplete}");
+
         if (isTodayMissionComplete) return;
 
-        bool missionMatch = false;
-
-        // 날짜별 미션 매칭
-        if ((currentDay == 1 || currentDay == 8) && deviceName == "WaterPurifier")
-            missionMatch = true;
-        else if ((currentDay == 2 || currentDay == 9) && deviceName == "FoodDevice")
-            missionMatch = true;
-        else if ((currentDay == 3 || currentDay == 10) && deviceName == "Wall")
-            missionMatch = true;
-        else if ((currentDay == 4 || currentDay == 11) && deviceName == "Pipe")
-            missionMatch = true;
-        else if ((currentDay == 5 || currentDay == 12) && deviceName == "Generator")
-            missionMatch = true;
-        else if ((currentDay == 6 || currentDay == 13) && deviceName == "Telescope")
-            missionMatch = true;
-        else if ((currentDay == 7 || currentDay == 14) && deviceName == "Communicate")
-            missionMatch = true;
-        else if (currentDay == 15 && deviceName == "Lanton")
-            missionMatch = true;
+        bool missionMatch = CheckMissionMatch(deviceName);
 
         if (missionMatch)
         {
             isTodayMissionComplete = true;
             UpdateTaskUI();
-
-            // ★ 미션 완료 시에도 자동 저장
             SaveGameData();
+
+            Debug.Log($"{deviceName} 수리 완료! 미션 달성!");
         }
     }
 
-    // =========================================================
-    // ★ UI 업데이트
-    // =========================================================
+    private bool CheckMissionMatch(string deviceName)
+    {
+        return (currentDay == 1 || currentDay == 8) && deviceName == "WaterPurifier" ||
+               (currentDay == 2 || currentDay == 9) && deviceName == "FoodDevice" ||
+               (currentDay == 3 || currentDay == 10) && deviceName == "Wall" ||
+               (currentDay == 4 || currentDay == 11) && deviceName == "Pipe" ||
+               (currentDay == 5 || currentDay == 12) && deviceName == "Generator" ||
+               (currentDay == 6 || currentDay == 13) && deviceName == "Telescope" ||
+               (currentDay == 7 || currentDay == 14) && deviceName == "Communicate" ||
+               currentDay == 15 && deviceName == "Lanton";
+    }
+
     private void UpdateTaskUI()
     {
         if (taskTextUI == null) return;
         int missionIndex = currentDay - 1;
 
-        // 미션이 없는 경우
         if (missionIndex < 0 || missionIndex >= missionTextsByDay.Count ||
             string.IsNullOrWhiteSpace(missionTextsByDay[missionIndex]))
         {
@@ -356,14 +386,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // 오늘 미션 완료한 경우
         if (isTodayMissionComplete)
         {
             taskTextUI.text = "오늘의 임무 완료!\n(침낭에서 자서 다음 날로)";
             return;
         }
 
-        // 미션 텍스트 색상 처리
         string rawText = missionTextsByDay[missionIndex];
         string coloredText = rawText.Replace("목표:", "<color=#D5C790>목표:</color><color=#FFFFFF>");
         taskTextUI.text = coloredText;
@@ -375,35 +403,24 @@ public class GameManager : MonoBehaviour
             dayTextUI.text = "Day " + currentDay;
     }
 
-    // =========================================================
-    // ★ Public 접근자
-    // =========================================================
     public int GetCurrentDay() => currentDay;
 
     public bool IsTodayMissionComplete()
     {
         int missionIndex = currentDay - 1;
 
-        // 이미 완료 표시된 경우
         if (isTodayMissionComplete) return true;
 
-        // 미션 범위 밖인 경우
         if (missionIndex < 0 || missionIndex >= missionTextsByDay.Count)
             return true;
 
-        // 미션 텍스트가 비어있는 경우
         return string.IsNullOrWhiteSpace(missionTextsByDay[missionIndex]);
     }
 
-    // =========================================================
-    // ★ 수동 저장 기능 (선택사항 - 메뉴 버튼에 연결 가능)
-    // =========================================================
     public void ManualSave()
     {
         SaveGameData();
-        if (UIManager.Instance != null)
-            UIManager.Instance.ShowNotification("게임이 저장되었습니다!");
-        else
-            Debug.Log("수동 저장 완료!");
+        UIManager.Instance?.ShowNotification("게임이 저장되었습니다!");
+        Debug.Log("수동 저장 완료!");
     }
 }
