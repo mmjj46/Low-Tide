@@ -3,8 +3,8 @@ using UnityEngine.SceneManagement;
 
 public class book : MonoBehaviour, IInteractable
 {
-    [Header("Day별 씬 이름 설정")]
-    public string[] diarySceneNames = new string[15]; // Day 1~15에 해당하는 씬 이름
+    [Header("씬 설정")]
+    public string diarySceneName = "DiaryScene"; // ★ 단일 일기장 씬
 
     [Header("Audio Settings")]
     public AudioClip openSound; // 책 펼치는 소리
@@ -36,36 +36,20 @@ public class book : MonoBehaviour, IInteractable
         {
             if (UIManager.Instance != null)
             {
-                UIManager.Instance.ShowNotification("아직 할 일이 남았다. 일기를 쓸 수 없다.");
+                UIManager.Instance.ShowNotification("아직 할 일을 남았다. 일기를 쓸 수 없다.");
             }
             return;
         }
 
-        // 미션 완료 시 해당 Day의 일기장 씬으로 이동
+        // 미션 완료 시 일기장 씬으로 이동
         GoToDiaryScene();
     }
 
     void GoToDiaryScene()
     {
         int currentDay = gameManager.GetCurrentDay();
-        int sceneIndex = currentDay - 1; // 배열은 0부터 시작
 
-        // 유효성 검사
-        if (sceneIndex < 0 || sceneIndex >= diarySceneNames.Length)
-        {
-            Debug.LogError($"[book] Day {currentDay}에 해당하는 씬 인덱스가 범위를 벗어났습니다!");
-            return;
-        }
-
-        string targetScene = diarySceneNames[sceneIndex];
-
-        if (string.IsNullOrEmpty(targetScene))
-        {
-            Debug.LogError($"[book] Day {currentDay}에 해당하는 씬 이름이 설정되지 않았습니다!");
-            return;
-        }
-
-        Debug.Log($"[book] Day {currentDay} 일기장 씬으로 이동: {targetScene}");
+        Debug.Log($"[book] Day {currentDay} 일기장 씬으로 이동: {diarySceneName}");
 
         // 소리 재생
         if (openSound != null && audioSource != null)
@@ -73,11 +57,15 @@ public class book : MonoBehaviour, IInteractable
             audioSource.PlayOneShot(openSound);
         }
 
-        // 현재 날짜 저장
+        // ★★★ [핵심 수정] 씬 이동 직전에 현재 위치(책상 앞)를 저장합니다! ★★★
+        // 이걸 해야 일기를 쓰고 돌아왔을 때 미니게임 장소가 아니라 여기 서 있습니다.
+        gameManager.SaveGameData();
+
+        // 현재 날짜 저장 (DiaryDialogue에서 이 값을 읽어서 해당 텍스트 파일 로드)
         PlayerPrefs.SetInt("CurrentDay", currentDay);
         PlayerPrefs.Save();
 
-        // 해당 Day의 씬으로 이동
-        SceneManager.LoadScene(targetScene);
+        // 일기장 씬으로 이동
+        SceneManager.LoadScene(diarySceneName);
     }
 }

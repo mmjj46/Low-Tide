@@ -7,7 +7,7 @@ public class SaveData
     public bool isMissionComplete;   // 오늘 미션 완료 여부
     public Vector3 playerPos;        // 플레이어 위치
 
-    // ★ 각 오브젝트의 고장 상태 추가
+    // ★ 각 오브젝트의 고장 상태
     public bool waterPurifierBroken;
     public bool foodDeviceBroken;
     public bool wallBroken;
@@ -17,7 +17,7 @@ public class SaveData
     public bool communicateBroken;
     public bool lantonBroken;
 
-    // 생성자
+    // GameManager에서 호출하는 생성자
     public SaveData(int _day, bool _isComplete, Vector3 _pos,
         bool _waterBroken, bool _foodBroken, bool _wallBroken, bool _pipeBroken,
         bool _generatorBroken, bool _telescopeBroken, bool _communicateBroken, bool _lantonBroken)

@@ -1421,7 +1421,13 @@ MonoBehaviour:
   leftText: {fileID: 1109960514}
   rightText: {fileID: 2051098307}
   historyManager: {fileID: 366943877}
-  dialogueFile: {fileID: 4900000, guid: 708f4d30ff64994498105bce526e37a4, type: 3}
+  dialogueFilesByDay:
+  - {fileID: 4900000, guid: f99d95e7d43635a40a6e174db16ee94b, type: 3}
+  - {fileID: 4900000, guid: 708f4d30ff64994498105bce526e37a4, type: 3}
+  - {fileID: 4900000, guid: 68906ce33e794664fa996987eb303d97, type: 3}
+  - {fileID: 4900000, guid: 9f655da48539c8c44a58d514e84e8e67, type: 3}
+  - {fileID: 4900000, guid: 38dd48e795f557047a344c390d6d6477, type: 3}
+  - {fileID: 4900000, guid: 955216b685fc8714c80a7a3fbee59621, type: 3}
   typingSpeed: 0.05
   maxLinesPerPage: 20
   sfxAudioSource: {fileID: 757273301}

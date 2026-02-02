@@ -209,7 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e099ecbeffa5bf4386f32488eb020f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  toolSound: {fileID: 8300000, guid: 3fd3748bf577e4149a0b796b49b6a854, type: 3}
+  toolSound: {fileID: 8300000, guid: 8001e9652e26f66479d4d2e5bb672007, type: 3}
 --- !u!65 &29982634
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3452,23 +3452,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2b78ed1ea4ff254c88bbe2787b41733, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  diarySceneNames:
-  - Day1
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  openSound: {fileID: 0}
+  diarySceneName: DiaryScene
+  openSound: {fileID: 8300000, guid: 2a293fd11205dcb47b9d487f9ec1e34d, type: 3}
 --- !u!65 &1880021667
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3818,7 +3803,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: PipeConnecting
-  workingSound: {fileID: 0}
+  workingSound: {fileID: 8300000, guid: 4166e821882d67746abe053e304cf2e6, type: 3}
   brokenSound: {fileID: 0}
 --- !u!65 &2065270268
 BoxCollider:
@@ -4199,7 +4184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65099f705f4a2ec4ea393822f5f753d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bookSound: {fileID: 8300000, guid: e6f9ac875f8c9fc419b03668de921096, type: 3}
+  bookSound: {fileID: 8300000, guid: 0c7c989ced41a5e42bc60a8394508db1, type: 3}
 --- !u!65 &2135635086
 BoxCollider:
   m_ObjectHideFlags: 0

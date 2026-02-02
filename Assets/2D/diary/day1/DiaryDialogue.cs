@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -11,7 +11,7 @@ public class DiaryDialogue : MonoBehaviour
     public DialogueHistoryManager historyManager;
 
     [Header("Dialogue Settings")]
-    public TextAsset dialogueFile; // ¡Ú ÀÌ ¾À¿¡ ÇØ´çÇÏ´Â ´ëÈ­ ÆÄÀÏ (ÇÏ³ª¸¸)
+    public TextAsset[] dialogueFilesByDay; // Day 1~6 íŒŒì¼ ì—°ê²°
     public float typingSpeed = 0.05f;
     public int maxLinesPerPage = 20;
 
@@ -22,11 +22,12 @@ public class DiaryDialogue : MonoBehaviour
     public float pitchVariance = 0.1f;
 
     [Header("Scene Settings")]
-    public string mainGameSceneName = "GameScene"; // ¡Ú º¹±ÍÇÒ 3D ¸ÞÀÎ ¾À ÀÌ¸§
+    public string mainGameSceneName = "GameScene"; // ëŒì•„ê°ˆ ë°© ì”¬ ì´ë¦„
 
     private string[] lines;
     private int currentIndex = 0;
     private bool isTyping = false;
+    private int currentDay = 1;
 
     private TMP_Text currentTargetUI;
     private string leftAccumulated = "";
@@ -38,29 +39,36 @@ public class DiaryDialogue : MonoBehaviour
         leftText.text = "";
         rightText.text = "";
 
-        // ´ëÈ­ ÆÄÀÏ ·Îµå
-        if (dialogueFile != null)
-        {
-            lines = dialogueFile.text.Split(
-                new[] { "\r\n", "\r", "\n" },
-                System.StringSplitOptions.RemoveEmptyEntries
-            );
+        currentDay = PlayerPrefs.GetInt("CurrentDay", 1);
+        Debug.Log($"[DiaryDialogue] Day {currentDay} ì¼ê¸° ì‹œìž‘");
 
-            if (lines.Length > 0)
-            {
-                StartCoroutine(TypeSentence(FormatText(lines[currentIndex])));
-            }
-            else
-            {
-                Debug.LogWarning("[DiaryDialogue] ´ëÈ­ ÆÄÀÏÀÌ ºñ¾îÀÖ½À´Ï´Ù!");
-                ReturnToMainGame();
-            }
-        }
-        else
+        // Day 7 ì´ìƒì´ë©´ ì¼ê¸°ìž¥ ì¼œì§€ë©´ ì•ˆ ë¨ -> ë°”ë¡œ ë³µê·€
+        if (currentDay > 6)
         {
-            Debug.LogError("[DiaryDialogue] dialogueFileÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!");
-            ReturnToMainGame();
+            ReturnToRoomOnly();
+            return;
         }
+
+        LoadDialogueForDay(currentDay);
+    }
+
+    void LoadDialogueForDay(int day)
+    {
+        int index = day - 1;
+
+        if (dialogueFilesByDay == null || index < 0 || index >= dialogueFilesByDay.Length || dialogueFilesByDay[index] == null)
+        {
+            Debug.LogError($"[DiaryDialogue] Day {day} íŒŒì¼ ì—†ìŒ. ë°©ìœ¼ë¡œ ë³µê·€.");
+            ReturnToRoomOnly();
+            return;
+        }
+
+        lines = dialogueFilesByDay[index].text.Split(new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.RemoveEmptyEntries);
+
+        if (lines.Length > 0)
+            StartCoroutine(TypeSentence(FormatText(lines[currentIndex])));
+        else
+            ReturnToRoomOnly();
     }
 
     void Update()
@@ -71,21 +79,19 @@ public class DiaryDialogue : MonoBehaviour
         {
             if (isTyping)
             {
-                // Å¸ÀÌÇÎ ÁßÀÏ ¶§ Å¬¸¯ÇÏ¸é Áï½Ã ¿Ï¼º
                 StopAllCoroutines();
                 FinishLine();
                 isTyping = false;
             }
             else if (currentIndex < lines.Length - 1)
             {
-                // ´ÙÀ½ ÁÙ·Î ÀÌµ¿
                 currentIndex++;
                 CheckPage();
                 StartCoroutine(TypeSentence(FormatText(lines[currentIndex])));
             }
             else
             {
-                // ¡Ú ¸¶Áö¸· ´ë»ç ÈÄ Å¬¸¯ ½Ã ¸ÞÀÎ °ÔÀÓÀ¸·Î º¹±Í + ´ÙÀ½ ³¯·Î
+                // â˜… ë§ˆì§€ë§‰ ëŒ€ì‚¬ í›„ í´ë¦­ ì‹œ
                 OnDiaryComplete();
             }
         }
@@ -93,86 +99,63 @@ public class DiaryDialogue : MonoBehaviour
 
     void OnDiaryComplete()
     {
-        int currentDay = PlayerPrefs.GetInt("CurrentDay", 1);
-        Debug.Log($"[DiaryDialogue] Day {currentDay} ÀÏ±â ÀÛ¼º ¿Ï·á! ´ÙÀ½ ³¯·Î ÁøÇà");
+        Debug.Log($"[DiaryDialogue] Day {currentDay} ì¼ê¸° ìž‘ì„± ì™„ë£Œ. ë°©ìœ¼ë¡œ ëŒì•„ê°‘ë‹ˆë‹¤.");
 
-        // ¡Ú ÀÏ±â ÀÛ¼º ¿Ï·á ÇÃ·¡±× ¼³Á¤
+        // â˜… [í•µì‹¬] ì¼ê¸° ìž‘ì„± ì™„ë£Œ í”Œëž˜ê·¸ ì €ìž¥
         PlayerPrefs.SetInt("DiaryCompleted", 1);
         PlayerPrefs.Save();
 
-        ReturnToMainGame();
-    }
-
-    void ReturnToMainGame()
-    {
-        Debug.Log($"[DiaryDialogue] {mainGameSceneName} ¾ÀÀ¸·Î º¹±Í");
+        // â˜… [í•µì‹¬] ìž ìžì§€ ì•Šê³  ë°©ìœ¼ë¡œ ì´ë™
         SceneManager.LoadScene(mainGameSceneName);
     }
 
-    string FormatText(string text)
+    void ReturnToRoomOnly()
     {
-        // °ø¹éÀ» Non-Breaking Space·Î º¯°æ (ÁÙ¹Ù²Þ ¹æÁö)
-        return text.Replace(" ", "\u00A0");
+        SceneManager.LoadScene(mainGameSceneName);
     }
+
+    // --- í…ìŠ¤íŠ¸ ì¶œë ¥ ë¡œì§ (ë™ì¼) ---
+    string FormatText(string text) => text.Replace(" ", "\u00A0");
 
     void CheckPage()
     {
         currentTargetUI.ForceMeshUpdate();
-
         if (currentTargetUI.textInfo.lineCount >= maxLinesPerPage)
         {
-            if (currentTargetUI == leftText)
-            {
-                currentTargetUI = rightText;
-            }
-            else
-            {
-                ResetPages();
-            }
+            if (currentTargetUI == leftText) currentTargetUI = rightText;
+            else ResetPages();
         }
     }
 
     void ResetPages()
     {
-        leftAccumulated = "";
-        rightAccumulated = "";
-        leftText.text = "";
-        rightText.text = "";
+        leftAccumulated = ""; rightAccumulated = "";
+        leftText.text = ""; rightText.text = "";
         currentTargetUI = leftText;
     }
 
     IEnumerator TypeSentence(string sentence)
     {
         isTyping = true;
-        string currentLineProgress = "";
         string baseText = (currentTargetUI == leftText) ? leftAccumulated : rightAccumulated;
+        string currentLineProgress = "";
 
-        // ¼Ò¸® ÇÇÄ¡ ÃÊ±âÈ­
-        if (sfxAudioSource != null)
-        {
-            sfxAudioSource.pitch = 1f;
-        }
+        if (sfxAudioSource != null) sfxAudioSource.pitch = 1f;
 
         foreach (char letter in sentence.ToCharArray())
         {
             currentLineProgress += letter;
             currentTargetUI.text = baseText + currentLineProgress;
 
-            // Å¸ÀÌÇÎ »ç¿îµå Àç»ý (°ø¹é Á¦¿Ü)
             if (sfxAudioSource != null && typingSound != null && !char.IsWhiteSpace(letter))
             {
                 sfxAudioSource.pitch = Random.Range(1f - pitchVariance, 1f + pitchVariance);
                 sfxAudioSource.PlayOneShot(typingSound);
             }
-
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        // ÇÇÄ¡ º¹±¸
-        if (sfxAudioSource != null)
-        {
-            sfxAudioSource.pitch = 1f;
-        }
+        if (sfxAudioSource != null) sfxAudioSource.pitch = 1f;
 
         UpdateData(sentence);
         isTyping = false;
@@ -188,20 +171,8 @@ public class DiaryDialogue : MonoBehaviour
 
     void UpdateData(string sentence)
     {
-        // È÷½ºÅä¸® ¸Å´ÏÀú¿¡ ·Î±× Ãß°¡
-        if (historyManager != null)
-        {
-            historyManager.AddLog(lines[currentIndex]);
-        }
-
-        // ´©Àû ÅØ½ºÆ®¿¡ Ãß°¡
-        if (currentTargetUI == leftText)
-        {
-            leftAccumulated += sentence + "\n\n";
-        }
-        else
-        {
-            rightAccumulated += sentence + "\n\n";
-        }
+        if (historyManager != null) historyManager.AddLog(lines[currentIndex]);
+        if (currentTargetUI == leftText) leftAccumulated += sentence + "\n\n";
+        else rightAccumulated += sentence + "\n\n";
     }
 }

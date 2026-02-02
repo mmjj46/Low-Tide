@@ -1,52 +1,50 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class SleepingBag : MonoBehaviour, IInteractable
 {
     public void Interact()
     {
-        GameManager gm = GameObject.Find("GameManager").GetComponent<GameManager>();
+        GameManager gm = FindObjectOfType<GameManager>();
 
-        if (gm == null)
+        if (gm == null) return;
+
+        int currentDay = gm.GetCurrentDay();
+
+        // Day 7 이상: 조건 없이 잠
+        if (currentDay > 6)
         {
-            Debug.LogError("[SleepingBag] GameManager를 찾을 수 없습니다!");
+            UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.");
+            StartCoroutine(ProcessSleep(gm));
             return;
         }
 
-        // ★ 일기를 작성했는지 확인
+        // ★ Day 1~6: 일기 썼는지 확인
+        // 일기장(DiaryDialogue)에서 DiaryCompleted를 1로 만들고 왔어야 함
         if (PlayerPrefs.GetInt("DiaryCompleted", 0) != 1)
         {
-            UIManager.Instance?.ShowNotification("먼저 일기를 작성해야 잠들 수 있다.");
+            UIManager.Instance.ShowNotification("먼저 일기를 작성해야 잠들 수 있다.");
             return;
         }
 
-        // ★ 일기 작성 완료 후 저장 + 다음 날로
-        UIManager.Instance?.ShowNotification("잠을 자서 다음 날로 넘어갑니다.", () =>
-        {
-            // 저장
-            gm.SaveGameData();
-
-            // 다음 날로 진행
-            StartCoroutine(GoToNextDayCoroutine(gm));
-        });
+        // 일기를 썼다면 여기서 잠을 잠
+        UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.");
+        StartCoroutine(ProcessSleep(gm));
     }
 
-    System.Collections.IEnumerator GoToNextDayCoroutine(GameManager gm)
+    IEnumerator ProcessSleep(GameManager gm)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(2.0f); // 메시지 읽을 시간
 
-        // 다음 날로
-        int nextDay = gm.GetCurrentDay() + 1;
+        gm.SaveGameData();
 
-        // GameManager의 private 변수를 직접 수정할 수 없으므로
-        // GameManager에 public 함수를 추가해야 합니다
-        // 임시로 PlayerPrefs를 통해 처리
-        PlayerPrefs.SetInt("NextDayPending", 1);
-        PlayerPrefs.SetInt("DiaryCompleted", 0); // 플래그 초기화
+        // ★ 다음 날 아침을 위한 설정
+        PlayerPrefs.SetInt("NextDayPending", 1); // "다음 날로 넘어가라"는 명령
+        PlayerPrefs.SetInt("DiaryCompleted", 0); // "일기 씀" 상태 초기화 (내일을 위해)
         PlayerPrefs.Save();
 
-        // 씬 재로드
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-        );
+        // 씬 재로드 (GameManager가 다시 켜지면서 NextDayPending을 보고 Day를 1 올림)
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

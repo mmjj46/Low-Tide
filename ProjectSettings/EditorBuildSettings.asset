@@ -30,6 +30,6 @@ EditorBuildSettings:
     path: Assets/2D/StainErasing/StainErasing.unity
     guid: 385a52a23dedaf641b6a44ee18362183
   - enabled: 1
-    path: Assets/2D/diary/day1/Day1.unity
+    path: Assets/2D/diary/day1/DiaryScene.unity
     guid: aac189e60061b8245837f9982c5d1397
   m_configObjects: {}
