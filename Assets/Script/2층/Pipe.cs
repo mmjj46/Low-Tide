@@ -5,14 +5,19 @@ public class Pipe : MonoBehaviour, IInteractable
 {
     public bool isBroken = false; // true = 연결 안 됨(고장), false = 연결됨(정상)
 
-    // ★ 파이프 미니게임 씬 이름 (Dot 게임으로 추정되어 "Dot"으로 설정함)
-    // 만약 씬 이름이 다르다면 유니티 인스펙터에서 수정해주세요!
+    // ★ 파이프 미니게임 씬 이름 (인스펙터에서 확인 필수!)
     public string miniGameSceneName = "Pipe_2";
 
     private string myTargetName = "Pipe"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;
 
-    void Start()
+    [Header("사운드 이펙트")]
+    public AudioClip workingSound; // 정상 작동 소리 (물 흐르는 소리)
+    public AudioClip brokenSound;  // 고장난 소리 (증기 새는 소리, 금속 탕탕 소리)
+    private AudioSource audioSource;
+
+    // ★ Start -> Awake로 변경 (안전성 확보)
+    void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
         if (gameManager == null)
@@ -20,13 +25,17 @@ public class Pipe : MonoBehaviour, IInteractable
             Debug.LogError("Pipe: GameManager를 찾을 수 없습니다!");
         }
 
-        // ★ CheckMiniGameReturn 제거 (GameManager가 처리)
+        // 오디오 소스 설정
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
     }
 
 #if UNITY_EDITOR
     void Update()
     {
-        // [테스트] 숫자 4키로 강제 연결 시도
         if (Input.GetKeyDown(KeyCode.Alpha4) && isBroken)
         {
             Debug.Log("Pipe: [테스트] 강제 연결 시도");
@@ -42,19 +51,38 @@ public class Pipe : MonoBehaviour, IInteractable
 
         if (!isBroken)
         {
+            // ★ 정상 상태: 물 흐르는 소리 재생
+            PlaySound(workingSound);
             UIManager.Instance.ShowNotification("깨끗한 물이 흐르고 있다.");
         }
         else
         {
-            // 고장났으면 연결 시도 (미니게임 이동)
+            // ★ 고장 상태: 소리가 꺼져있다면 다시 켬
+            if (!audioSource.isPlaying && brokenSound != null)
+            {
+                audioSource.clip = brokenSound;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+
+            // 고장났으면 연결 시도
             TryConnect();
         }
     }
 
+    // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakPipe()
     {
         isBroken = true;
         Debug.Log("Pipe: 파이프 연결 해제!");
+
+        // ★★★ 고장 나자마자 소리 재생 (증기 새는 소리 등) ★★★
+        if (brokenSound != null && audioSource != null)
+        {
+            audioSource.clip = brokenSound;
+            audioSource.loop = true; // 파이프 터진 건 계속 소리 나는 게 자연스러움
+            audioSource.Play();
+        }
     }
 
     // 연결 시도 -> 미니게임 씬으로 이동
@@ -84,6 +112,9 @@ public class Pipe : MonoBehaviour, IInteractable
 
         Debug.Log($"Pipe: Day {currentDay} - 미니게임 이동");
 
+        // 씬 이동 전 소리 끄기
+        if (audioSource != null) audioSource.Stop();
+
         // 1. 현재 게임 상태 저장
         gameManager.SaveGameData();
 
@@ -104,11 +135,32 @@ public class Pipe : MonoBehaviour, IInteractable
         Debug.Log("Pipe: 미니게임 성공 - 강제 연결");
 
         isBroken = false; // 연결 완료
+
+        // ★★★ 1. 고장 소리 끄기
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.loop = false;
+        }
+
+        // ★★★ 2. 수리 완료 피드백 (물 흐르는 소리)
+        PlaySound(workingSound);
+
         UIManager.Instance.ShowNotification("파이프를 연결했다.");
 
         if (gameManager != null)
         {
             gameManager.OnDeviceFixed(myTargetName);
+        }
+    }
+
+    // 소리 재생 헬퍼 함수
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.loop = false;
+            audioSource.PlayOneShot(clip);
         }
     }
 }

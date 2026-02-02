@@ -3,17 +3,21 @@ using UnityEngine.SceneManagement; // ★ 씬 이동을 위해 필수!
 
 public class Telescope : MonoBehaviour, IInteractable
 {
-    public bool isBroken = false; // true = 고장(렌즈 더러움), false = 정상
+    public bool isBroken = false; // true = 고장(렌즈 더러움/깨짐), false = 정상
 
-    // ★ 연결할 미니게임 씬 이름 
-    // (망원경은 렌즈를 닦는 것이 어울려서 StainErasing으로 설정했습니다. 
-    // 원하시면 인스펙터에서 "Random"으로 바꾸셔도 됩니다!)
+    // ★ 망원경은 렌즈 닦기(StainErasing)가 어울림
     public string miniGameSceneName = "StainErasing";
 
     private string myTargetName = "Telescope"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;
 
-    void Start()
+    [Header("사운드 이펙트")]
+    public AudioClip workingSound; // 정상 작동 소리 (렌즈 돌아가는 소리, 발견 효과음)
+    public AudioClip brokenSound;  // 고장난 소리 (유리 금가는 소리, 끽끽거리는 소리)
+    private AudioSource audioSource;
+
+    // ★ Start -> Awake로 변경 (안전성 확보)
+    void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
         if (gameManager == null)
@@ -21,13 +25,17 @@ public class Telescope : MonoBehaviour, IInteractable
             Debug.LogError("Telescope: GameManager를 찾을 수 없습니다!");
         }
 
-        // ★ CheckMiniGameReturn 제거 (GameManager가 처리)
+        // 오디오 소스 설정
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
     }
 
 #if UNITY_EDITOR
     void Update()
     {
-        // [테스트] 숫자 6키로 강제 수리 시도
         if (Input.GetKeyDown(KeyCode.Alpha6) && isBroken)
         {
             Debug.Log("Telescope: [테스트] 강제 수리 시도");
@@ -43,6 +51,9 @@ public class Telescope : MonoBehaviour, IInteractable
 
         if (!isBroken) // ★ 고장나지 않았으면 (정상 작동)
         {
+            // ★ 정상 소리 재생
+            PlaySound(workingSound);
+
             // 기존의 랜덤 관측 로직 유지
             float r = Random.value;
 
@@ -57,15 +68,36 @@ public class Telescope : MonoBehaviour, IInteractable
         }
         else // ★ 고장났으면 (미니게임 이동)
         {
-            // 쓴 지 오래된 망원경이다... -> 수리 시도
+            // ★ 고장 소리 재생 (안 나고 있다면)
+            if (!audioSource.isPlaying && brokenSound != null)
+            {
+                audioSource.clip = brokenSound;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+
+            UIManager.Instance.ShowNotification("렌즈가 너무 더러워서 아무것도 보이지 않는다.");
+
+            // 수리 시도
             TryRepair();
         }
     }
 
+    // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakTelescope()
     {
         isBroken = true; // 고장남
         Debug.Log("Telescope: 망원경 고장 발생!");
+
+        // ★★★ 고장 나자마자 소리 재생 ★★★
+        if (brokenSound != null && audioSource != null)
+        {
+            audioSource.clip = brokenSound;
+            // 망원경은 보통 '챙그랑' 하고 끝나므로 loop는 false가 어울리지만, 
+            // '바람 소리' 같은 거라면 true로 하셔도 됩니다.
+            audioSource.loop = false;
+            audioSource.Play();
+        }
     }
 
     // 수리 시도 -> 미니게임 씬으로 이동
@@ -95,6 +127,9 @@ public class Telescope : MonoBehaviour, IInteractable
 
         Debug.Log($"Telescope: Day {currentDay} - 미니게임 이동");
 
+        // 씬 이동 전 소리 끄기
+        if (audioSource != null) audioSource.Stop();
+
         // 1. 현재 게임 상태 저장
         gameManager.SaveGameData();
 
@@ -116,6 +151,16 @@ public class Telescope : MonoBehaviour, IInteractable
 
         isBroken = false; // 수리 완료
 
+        // ★★★ 1. 고장 소리 끄기
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.loop = false;
+        }
+
+        // ★★★ 2. 수리 완료 피드백 (렌즈 닦은 뽀득 소리 or 발견 소리)
+        PlaySound(workingSound);
+
         // 1. 알림 메시지
         UIManager.Instance.ShowNotification("망원경 렌즈를 깨끗이 닦았다.");
 
@@ -123,6 +168,16 @@ public class Telescope : MonoBehaviour, IInteractable
         if (gameManager != null)
         {
             gameManager.OnDeviceFixed(myTargetName);
+        }
+    }
+
+    // 소리 재생 헬퍼 함수
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.loop = false;
+            audioSource.PlayOneShot(clip);
         }
     }
 }

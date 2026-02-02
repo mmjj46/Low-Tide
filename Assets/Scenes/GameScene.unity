@@ -209,6 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e099ecbeffa5bf4386f32488eb020f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  toolSound: {fileID: 8300000, guid: 3fd3748bf577e4149a0b796b49b6a854, type: 3}
 --- !u!65 &29982634
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -510,6 +511,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a4a81b5c838cab47a07af6ebdc38012, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  interactSound: {fileID: 8300000, guid: c095c3440388f1447b30b144f25dede6, type: 3}
 --- !u!64 &315500693
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -681,6 +683,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: Random
+  workingSound: {fileID: 8300000, guid: 34c2ecd10a9d8224381e75c9185f998e, type: 3}
+  brokenSound: {fileID: 8300000, guid: 4653df4ab90403c4f8f2724a4fadea3d, type: 3}
 --- !u!65 &320560432
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1212,6 +1216,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: StainErasing
+  workingSound: {fileID: 8300000, guid: 5778f2b5b25f4e34ea13457d0f60d3b1, type: 3}
+  brokenSound: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1378,7 +1384,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 389, y: -197}
+  m_AnchoredPosition: {x: 300, y: -80}
   m_SizeDelta: {x: 600, y: 240}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1136885724
@@ -1811,6 +1817,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[5]
       value: 
       objectReference: {fileID: 2100000, guid: ffe64586887fa014b95d093b40d10b75, type: 2}
+    - target: {fileID: 2734096456892374499, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      propertyPath: m_TagString
+      value: Interactable
+      objectReference: {fileID: 0}
     - target: {fileID: 3153214203999363039, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       propertyPath: m_TagString
       value: Interactable
@@ -2344,6 +2354,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6479137908180158667, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1261525382}
+    - targetCorrespondingSourceObject: {fileID: 2734096456892374499, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1880021666}
+    - targetCorrespondingSourceObject: {fileID: 2734096456892374499, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1880021667}
     - targetCorrespondingSourceObject: {fileID: -4824514989573870144, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2135635086}
@@ -2854,6 +2870,8 @@ MonoBehaviour:
   isBroken: 0
   miniGameSceneName: StainErasing
   brokenGraphicRenderer: {fileID: 1388630143}
+  workingSound: {fileID: 0}
+  brokenSound: {fileID: 8300000, guid: fc9753098eeb09f4fb6063b5a2196789, type: 3}
 --- !u!23 &1388630143 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -1660384031183063813, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
@@ -2892,6 +2910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39a3a9bb45ca6ea48a753059c8690d99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  radioNoiseSound: {fileID: 8300000, guid: 048be0304ff23a24eb6bd3dc086c0d71, type: 3}
 --- !u!1 &1517807375
 GameObject:
   m_ObjectHideFlags: 0
@@ -3103,7 +3122,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -248, y: -197}
+  m_AnchoredPosition: {x: -138.5, y: -80}
   m_SizeDelta: {x: 277, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1536238071
@@ -3201,7 +3220,7 @@ MonoBehaviour:
   lantonObject: {fileID: 743043021}
   weatherManager: {fileID: 1530035206}
   playerTransform: {fileID: 2122407657}
-  debugStartDay: 8
+  debugStartDay: 1
 --- !u!4 &1543384604
 Transform:
   m_ObjectHideFlags: 0
@@ -3414,6 +3433,63 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: Pipe_2
+  workingSound: {fileID: 8300000, guid: 80f41d9f9429eef47a3bd280fd026955, type: 3}
+  brokenSound: {fileID: 8300000, guid: bb7fc5801465956499ef1f6f0429b4e4, type: 3}
+--- !u!1 &1880021665 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2734096456892374499, guid: 2d6c1b7fa394cf44182a17d79d34a54f, type: 3}
+  m_PrefabInstance: {fileID: 1261525350}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1880021666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1880021665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2b78ed1ea4ff254c88bbe2787b41733, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diarySceneNames:
+  - Day1
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  openSound: {fileID: 0}
+--- !u!65 &1880021667
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1880021665}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0040138643, y: 0.0026175368, z: 0.00030976144}
+  m_Center: {x: 0.00094159064, y: 0.001280909, z: 0.00007662815}
 --- !u!64 &1937795418
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3742,6 +3818,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: PipeConnecting
+  workingSound: {fileID: 0}
+  brokenSound: {fileID: 0}
 --- !u!65 &2065270268
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3777,6 +3855,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBroken: 0
   miniGameSceneName: Random
+  workingSound: {fileID: 8300000, guid: 417577ef5ff44184183ed74e7adaee9d, type: 3}
+  brokenSound: {fileID: 8300000, guid: b7a70654b674b5348bdb951fdb790f8b, type: 3}
 --- !u!65 &2105479890
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3983,7 +4063,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2127541365
@@ -4084,6 +4164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcf5a1fbfdac2a84aa669e540e312baf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mapSound: {fileID: 8300000, guid: 7e2301757f54876409ed7c7d5a2e15aa, type: 3}
 --- !u!64 &2135635084
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4118,6 +4199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65099f705f4a2ec4ea393822f5f753d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bookSound: {fileID: 8300000, guid: e6f9ac875f8c9fc419b03668de921096, type: 3}
 --- !u!65 &2135635086
 BoxCollider:
   m_ObjectHideFlags: 0

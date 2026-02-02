@@ -1,15 +1,21 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // ★ 씬 이동을 위해 필수!
+using UnityEngine.SceneManagement;
 
 public class Generator : MonoBehaviour, IInteractable
 {
     public bool isBroken = false;
-    public string miniGameSceneName = "PipeConnecting"; // 연결할 미니게임 씬 이름
+    public string miniGameSceneName = "PipeConnecting"; // ★ 인스펙터에서 연결할 미니게임 씬 이름 확인!
 
-    private string myTargetName = "Generator"; // ★ GameManager가 식별할 이름
+    private string myTargetName = "Generator";
     private GameManager gameManager;
 
-    void Start()
+    [Header("사운드 이펙트")]
+    public AudioClip workingSound; // 정상 작동 소리 (웅웅~ 발전기 돌아가는 소리)
+    public AudioClip brokenSound;  // 고장난 소리 (스파크 튀는 소리, 혹은 전원 꺼지는 소리)
+    private AudioSource audioSource;
+
+    // ★ Start -> Awake로 변경 (안전성 확보)
+    void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
 
@@ -18,13 +24,17 @@ public class Generator : MonoBehaviour, IInteractable
             Debug.LogError("Generator: GameManager를 찾을 수 없습니다!");
         }
 
-        // ★ CheckMiniGameReturn 제거! (GameManager가 처리함)
+        // 오디오 소스 설정
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
     }
 
 #if UNITY_EDITOR
     void Update()
     {
-        // [테스트] 숫자 5키로 강제 수리 시도
         if (Input.GetKeyDown(KeyCode.Alpha5) && isBroken)
         {
             Debug.Log("Generator: [테스트] 강제 수리 시도");
@@ -39,19 +49,38 @@ public class Generator : MonoBehaviour, IInteractable
 
         if (!isBroken)
         {
+            // ★ 정상 상태: 웅웅거리는 작동음 재생
+            PlaySound(workingSound);
             UIManager.Instance.ShowNotification("발전기가 웅웅거리며 작동 중이다.");
         }
         else
         {
-            // 고장났으면 수리 시도 (미니게임 이동)
+            // ★ 고장 상태: 소리가 꺼져있다면 다시 켬
+            if (!audioSource.isPlaying && brokenSound != null)
+            {
+                audioSource.clip = brokenSound;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+
+            // 고장났으면 수리 시도
             TryRepair();
         }
     }
 
+    // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakGenerator()
     {
         isBroken = true;
         Debug.Log("Generator: 고장 발생!");
+
+        // ★★★ 고장 나자마자 소리 재생 (스파크/경고음) ★★★
+        if (brokenSound != null && audioSource != null)
+        {
+            audioSource.clip = brokenSound;
+            audioSource.loop = true; // 발전기 고장은 계속 시끄러운 게 어울림
+            audioSource.Play();
+        }
     }
 
     public void TryRepair()
@@ -70,7 +99,7 @@ public class Generator : MonoBehaviour, IInteractable
 
         int currentDay = gameManager.GetCurrentDay();
 
-        // ★ 5일차 또는 12일차가 아니라면, 수리를 거부
+        // 5일차 또는 12일차가 아니면 수리 불가
         if (currentDay != 5 && currentDay != 12)
         {
             UIManager.Instance.ShowNotification("지금은 이걸 수리할 때가 아니다.");
@@ -80,15 +109,15 @@ public class Generator : MonoBehaviour, IInteractable
 
         Debug.Log($"Generator: Day {currentDay} - 미니게임 이동");
 
-        // 1. 현재 게임 상태 저장
+        // 씬 이동 전 소리 끄기
+        if (audioSource != null) audioSource.Stop();
+
         gameManager.SaveGameData();
 
-        // 2. "나 Generator 고치러 간다"라고 메모 남기기
         PlayerPrefs.SetString("MiniGameTarget", myTargetName);
         PlayerPrefs.SetInt("MiniGameSuccess", 0);
         PlayerPrefs.Save();
 
-        // 3. 미니게임 씬 로드
         SceneManager.LoadScene(miniGameSceneName);
     }
 
@@ -100,11 +129,32 @@ public class Generator : MonoBehaviour, IInteractable
         Debug.Log("Generator: 미니게임 성공 - 강제 수리");
 
         isBroken = false;
+
+        // ★★★ 1. 고장 소리 끄기
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.loop = false;
+        }
+
+        // ★★★ 2. 수리 완료 피드백 (재가동 소리)
+        PlaySound(workingSound);
+
         UIManager.Instance.ShowNotification("발전기를 수리했다.");
 
         if (gameManager != null)
         {
             gameManager.OnDeviceFixed(myTargetName);
+        }
+    }
+
+    // 소리 재생 헬퍼 함수
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.loop = false;
+            audioSource.PlayOneShot(clip);
         }
     }
 }

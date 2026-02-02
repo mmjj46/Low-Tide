@@ -35,7 +35,6 @@ public class GameManager : MonoBehaviour
     private int currentDay = 1;
     private bool isTodayMissionComplete = false;
 
-    // ★ [추가 1] 개발자 테스트용 변수 (인스펙터에서 4로 설정하면 4일차 시작!)
     [Header("--- Dev Test ---")]
     [Range(1, 15)]
     public int debugStartDay = 1;
@@ -52,6 +51,30 @@ public class GameManager : MonoBehaviour
 
     IEnumerator Initialize()
     {
+        // ★ 0단계: 침낭에서 잠 → 다음 날로 진행
+        if (PlayerPrefs.GetInt("NextDayPending", 0) == 1)
+        {
+            Debug.Log("[GameManager] 침낭에서 잠 - 다음 날로 진행");
+
+            // 저장된 게임 데이터 로드
+            LoadGameData();
+            yield return null;
+
+            // 다음 날로 진행
+            currentDay++;
+            isTodayMissionComplete = false;
+
+            RefreshGameStat(true);
+            SaveGameData();
+
+            // 플래그 초기화
+            PlayerPrefs.SetInt("NextDayPending", 0);
+            PlayerPrefs.Save();
+
+            Debug.Log($"[GameManager] Day {currentDay} 시작!");
+            yield break;
+        }
+
         // ★ 1단계: 미니게임 복귀 확인 및 처리
         string miniGameTarget = PlayerPrefs.GetString("MiniGameTarget", "");
         int miniGameSuccess = PlayerPrefs.GetInt("MiniGameSuccess", 0);
@@ -272,49 +295,13 @@ public class GameManager : MonoBehaviour
 
     private void StartNewGame()
     {
-        // ★ [변경] 테스트용 시작 날짜 적용
         currentDay = debugStartDay;
         isTodayMissionComplete = false;
 
         RefreshGameStat(true);
-
-        // ★ 테스트 시작 시 바로 저장 (해야 꼬이지 않음)
         SaveGameData();
+
         Debug.Log($"[테스트 모드] Day {currentDay}로 시작합니다!");
-    }
-
-    // ★ [수정] 다음 날로 넘어가는 함수 (빠른 속도 적용)
-    public void GoToNextDay()
-    {
-        if (!IsTodayMissionComplete())
-        {
-            UIManager.Instance?.ShowNotification("오늘의 미션을 먼저 완료하세요!");
-            return;
-        }
-
-        // 코루틴 시작 (속도 조절을 위해)
-        StartCoroutine(ProcessNextDaySequence());
-    }
-
-    // ★ [추가] 다음 날로 넘어가는 로직 (0.5초 대기)
-    private IEnumerator ProcessNextDaySequence()
-    {
-        if (UIManager.Instance != null)
-        {
-            // 0.5초만 보여주라고 요청 (UIManager 수정본 필요)
-            UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.", 0.5f, null);
-        }
-
-        // 실제 로직 대기 시간 (0.5초 후 바로 넘어감)
-        yield return new WaitForSeconds(0.5f);
-
-        currentDay++;
-        isTodayMissionComplete = false;
-
-        RefreshGameStat(true);
-        SaveGameData();
-
-        Debug.Log($"Day {currentDay} 시작!");
     }
 
     private void CheckForNewDayEvents()
@@ -373,7 +360,7 @@ public class GameManager : MonoBehaviour
 
         if (isTodayMissionComplete)
         {
-            taskTextUI.text = "오늘의 임무 완료!\n(침낭에서 자서 다음 날로)";
+            taskTextUI.text = "오늘의 임무 완료!\n(일기 작성 후 침낭에서 자서 다음 날로)";
             return;
         }
 
