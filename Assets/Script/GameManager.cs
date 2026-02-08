@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.IO;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance; // ½Ì±ÛÅæ Ãß°¡
+    public static GameManager Instance;
 
     [Header("UI Elements")]
     public TextMeshProUGUI taskTextUI;
@@ -33,17 +33,15 @@ public class GameManager : MonoBehaviour
     public Transform playerTransform;
     private string savePath;
 
-    [Header("Game State")]
     private int currentDay = 1;
     private bool isTodayMissionComplete = false;
 
-    [Header("--- Dev Test ---")]
+    [Header("--- Dev Test (Editor Only) ---")]
     [Range(1, 15)]
     public int debugStartDay = 1;
 
     void Awake()
     {
-        // ½Ì±ÛÅæ ÆĞÅÏ Àû¿ë
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
@@ -57,90 +55,83 @@ public class GameManager : MonoBehaviour
 
     IEnumerator Initialize()
     {
-        // =========================================================
-        // ¡Ú 1´Ü°è: "Ä§³¶¿¡¼­ ÀÚ°í ´ÙÀ½ ³¯·Î ³Ñ¾î°¡´Â °æ¿ì" È®ÀÎ
-        // =========================================================
-        if (PlayerPrefs.GetInt("NextDayPending", 0) == 1)
+        // 0. â˜…â˜…â˜… ìƒˆ ê²Œì„ í”Œë˜ê·¸ íŒŒì¼ í™•ì¸ (ìµœìš°ì„ ) â˜…â˜…â˜…
+        string flagPath = Application.persistentDataPath + "/newgame.flag";
+        Debug.Log($"[GameManager] ìƒˆ ê²Œì„ í”Œë˜ê·¸ íŒŒì¼ í™•ì¸: {flagPath}");
+
+        if (File.Exists(flagPath))
         {
-            Debug.Log("[GameManager] Ä§³¶¿¡¼­ Àá -> ´ÙÀ½ ³¯·Î ÁøÇà Áß...");
+            Debug.Log("[GameManager] âœ“âœ“âœ“ ìƒˆ ê²Œì„ í”Œë˜ê·¸ ê°ì§€! ê°•ì œ ìƒˆ ê²Œì„ ì‹œì‘ âœ“âœ“âœ“");
 
-            // 1. ±âÁ¸ µ¥ÀÌÅÍ ·Îµå
-            LoadGameData();
-            yield return null;
+            // í”Œë˜ê·¸ íŒŒì¼ ì‚­ì œ
+            try
+            {
+                File.Delete(flagPath);
+                Debug.Log("[GameManager] í”Œë˜ê·¸ íŒŒì¼ ì‚­ì œ ì™„ë£Œ");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[GameManager] í”Œë˜ê·¸ íŒŒì¼ ì‚­ì œ ì‹¤íŒ¨: {e.Message}");
+            }
 
-            // 2. ³¯Â¥ º¯°æ ¹× ÃÊ±âÈ­
-            currentDay++;
-            isTodayMissionComplete = false;
+            // í˜¹ì‹œ ë‚¨ì€ ì„¸ì´ë¸Œ íŒŒì¼ë„ ì‚­ì œ
+            if (File.Exists(savePath))
+            {
+                File.Delete(savePath);
+                Debug.Log("[GameManager] ë‚¨ì•„ìˆë˜ ì„¸ì´ë¸Œ íŒŒì¼ ì‚­ì œ");
+            }
 
-            // 3. º¯°æµÈ ³¯Â¥·Î UI ¹× ÀÌº¥Æ® °»½Å
-            RefreshGameStat(true);
-
-            // 4. ÀúÀå (Day°¡ ¿À¸¥ »óÅÂ·Î ÀúÀå)
-            SaveGameData();
-
-            // 5. ÇÃ·¡±× ÃÊ±âÈ­
-            PlayerPrefs.SetInt("NextDayPending", 0);
-            PlayerPrefs.Save();
-
-            Debug.Log($"[GameManager] Day {currentDay} ½ÃÀÛ ¿Ï·á!");
+            StartNewGame();
             yield break;
         }
 
-        // =========================================================
-        // ¡Ú 2´Ü°è: "¹Ì´Ï°ÔÀÓ¿¡¼­ ¼ö¸®ÇÏ°í µ¹¾Æ¿Â °æ¿ì" È®ÀÎ
-        // =========================================================
+        // 1. ë‹¤ìŒ ë‚  ì§„í–‰ í”Œë˜ê·¸ í™•ì¸
+        if (PlayerPrefs.GetInt("NextDayPending", 0) == 1)
+        {
+            LoadGameData();
+            yield return null;
+            currentDay++;
+            isTodayMissionComplete = false;
+            RefreshGameStat(true);
+            SaveGameData();
+            PlayerPrefs.SetInt("NextDayPending", 0);
+            PlayerPrefs.Save();
+            yield break;
+        }
+
+        // 2. ë¯¸ë‹ˆê²Œì„ ë³µê·€ í™•ì¸
         string miniGameTarget = PlayerPrefs.GetString("MiniGameTarget", "");
         int miniGameSuccess = PlayerPrefs.GetInt("MiniGameSuccess", 0);
 
         if (!string.IsNullOrEmpty(miniGameTarget) && miniGameSuccess == 1)
         {
-            Debug.Log($"[GameManager] ¹Ì´Ï°ÔÀÓ º¹±Í °¨Áö: {miniGameTarget} ¼ö¸® ¼º°ø");
-
             LoadGameData();
-
-            // ¿ÀºêÁ§Æ® »óÅÂ º¹¿ø ´ë±â
+            // UI ì—…ë°ì´íŠ¸ë¥¼ ìœ„í•œ 2í”„ë ˆì„ ëŒ€ê¸°
             yield return null;
             yield return null;
-
             ProcessMiniGameReturn(miniGameTarget);
-
-            // ÇÃ·¡±× ÃÊ±âÈ­
             PlayerPrefs.SetString("MiniGameTarget", "");
             PlayerPrefs.SetInt("MiniGameSuccess", 0);
             PlayerPrefs.Save();
-
             yield break;
         }
 
-        // =========================================================
-        // ¡Ú 3´Ü°è: "ÀÌ¾îÇÏ±â" ¶Ç´Â "ÀÏ±âÀå º¹±Í"
-        // =========================================================
-        if (PlayerPrefs.GetInt("IsLoadGame", 0) == 1 || File.Exists(savePath))
+        // 3. ì´ì–´í•˜ê¸° í™•ì¸ (íŒŒì¼ì´ ì‹¤ì œë¡œ ìˆì„ ë•Œë§Œ)
+        Debug.Log($"[GameManager] ì„¸ì´ë¸Œ íŒŒì¼ ì¡´ì¬ ì—¬ë¶€: {File.Exists(savePath)}");
+        if (File.Exists(savePath))
         {
-            Debug.Log("[GameManager] ±âÁ¸ µ¥ÀÌÅÍ ÀÌ¾îÇÏ±â (ÀÏ±âÀå º¹±Í Æ÷ÇÔ)");
-
+            Debug.Log("[GameManager] ê¸°ì¡´ ë°ì´í„° ë¡œë“œ ì¤‘...");
             LoadGameData();
-
-            if (PlayerPrefs.GetInt("IsLoadGame", 0) == 1)
-            {
-                PlayerPrefs.SetInt("IsLoadGame", 0);
-                PlayerPrefs.Save();
-            }
         }
-        // =========================================================
-        // ¡Ú 4´Ü°è: ¿ÏÀüÇÑ »õ °ÔÀÓ
-        // =========================================================
         else
         {
-            Debug.Log("[GameManager] ÀúÀå ÆÄÀÏ ¾øÀ½ -> »õ °ÔÀÓ ½ÃÀÛ");
+            Debug.Log("[GameManager] ì„¸ì´ë¸Œ íŒŒì¼ ì—†ìŒ -> ìƒˆ ê²Œì„ ì‹œì‘");
             StartNewGame();
         }
     }
 
     private void ProcessMiniGameReturn(string deviceName)
     {
-        Debug.Log($"[ProcessMiniGameReturn] {deviceName} ¼ö¸® Àû¿ë");
-
         switch (deviceName)
         {
             case "WaterPurifier": waterPurifierObject?.ForceFixFromMiniGame(); break;
@@ -158,54 +149,43 @@ public class GameManager : MonoBehaviour
     {
         UpdateTaskUI();
         UpdateDayUI();
-
-        if (triggerEvents)
-        {
-            CheckForNewDayEvents();
-        }
-
-        if (weatherManager != null)
-            weatherManager.SetWeather(currentDay);
+        if (triggerEvents) CheckForNewDayEvents();
+        if (weatherManager != null) weatherManager.SetWeather(currentDay);
     }
 
     public void SaveGameData()
     {
+        // playerTransformì´ nullì´ë©´ ì°¾ê¸° ì‹œë„
         if (playerTransform == null)
         {
             GameObject player = GameObject.FindWithTag("Player");
-            if (player != null) playerTransform = player.transform;
+            if (player != null)
+            {
+                playerTransform = player.transform;
+            }
             else
             {
-                Debug.LogError("GameManager: ÇÃ·¹ÀÌ¾î¸¦ Ã£À» ¼ö ¾ø¾î ÀúÀå ½ÇÆĞ.");
+                Debug.LogWarning("[GameManager] Player Transformì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ì €ì¥ ì·¨ì†Œ.");
                 return;
             }
         }
 
         try
         {
-            // SaveData »ı¼ºÀÚ È£Ãâ (¸Å°³º¯¼ö ¼ø¼­ ÁÖÀÇ)
             SaveData data = new SaveData(
-                currentDay,
-                isTodayMissionComplete,
-                playerTransform.position,
-                waterPurifierObject?.isBroken ?? false,
-                foodDeviceObject?.isBroken ?? false,
-                wallObject?.isBroken ?? false,
-                pipeObject?.isBroken ?? false,
-                generatorObject?.isBroken ?? false,
-                telescopeObject?.isBroken ?? false,
-                communicateObject?.isBroken ?? false,
-                lantonObject?.isBroken ?? false
+                currentDay, isTodayMissionComplete, playerTransform.position,
+                waterPurifierObject?.isBroken ?? false, foodDeviceObject?.isBroken ?? false,
+                wallObject?.isBroken ?? false, pipeObject?.isBroken ?? false,
+                generatorObject?.isBroken ?? false, telescopeObject?.isBroken ?? false,
+                communicateObject?.isBroken ?? false, lantonObject?.isBroken ?? false
             );
 
-            string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(savePath, json);
-
-            Debug.Log($"[ÀúÀå ¿Ï·á] Day {currentDay}, ÆÄÀÏ À§Ä¡: {savePath}");
+            File.WriteAllText(savePath, JsonUtility.ToJson(data, true));
+            Debug.Log($"[GameManager] ê²Œì„ ì €ì¥ ì™„ë£Œ - Day {currentDay}");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"ÀúÀå Áß ¿À·ù ¹ß»ı: {e.Message}");
+            Debug.LogError($"[GameManager] ì €ì¥ ì‹¤íŒ¨: {e.Message}");
         }
     }
 
@@ -213,7 +193,7 @@ public class GameManager : MonoBehaviour
     {
         if (!File.Exists(savePath))
         {
-            Debug.Log("ºÒ·¯¿Ã ¼¼ÀÌºê ÆÄÀÏÀÌ ¾ø½À´Ï´Ù. »õ °ÔÀÓÀ» ½ÃÀÛÇÕ´Ï´Ù.");
+            Debug.Log("[GameManager] ì„¸ì´ë¸Œ íŒŒì¼ ì—†ìŒ - ìƒˆ ê²Œì„ ì‹œì‘");
             StartNewGame();
             return;
         }
@@ -223,18 +203,10 @@ public class GameManager : MonoBehaviour
             string json = File.ReadAllText(savePath);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
-            if (data == null)
-            {
-                Debug.LogError("µ¥ÀÌÅÍ ÆÄÀÏÀÌ ¼Õ»óµÇ¾ú½À´Ï´Ù.");
-                StartNewGame();
-                return;
-            }
-
             currentDay = data.day;
             isTodayMissionComplete = data.isMissionComplete;
 
-            Debug.Log($"[·Îµå ¿Ï·á] Day {currentDay}");
-
+            // í”Œë ˆì´ì–´ ìœ„ì¹˜ ë³µì›
             if (playerTransform != null)
             {
                 CharacterController cc = playerTransform.GetComponent<CharacterController>();
@@ -245,10 +217,11 @@ public class GameManager : MonoBehaviour
 
             RestoreObjectStates(data);
             RefreshGameStat(false);
+            Debug.Log($"[GameManager] ê²Œì„ ë¡œë“œ ì™„ë£Œ - Day {currentDay}");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"·Îµå Áß ¿À·ù ¹ß»ı: {e.Message}");
+            Debug.LogError($"[GameManager] ë¡œë“œ ì‹¤íŒ¨: {e.Message}");
             StartNewGame();
         }
     }
@@ -256,43 +229,34 @@ public class GameManager : MonoBehaviour
     private void RestoreObjectStates(SaveData data)
     {
         if (data.waterPurifierBroken && waterPurifierObject != null) waterPurifierObject.BreakPurifier();
-        else if (waterPurifierObject != null) waterPurifierObject.isBroken = false;
-
         if (data.foodDeviceBroken && foodDeviceObject != null) foodDeviceObject.BreakDevice();
-        else if (foodDeviceObject != null) foodDeviceObject.isBroken = false;
-
         if (data.wallBroken && wallObject != null) wallObject.BreakWall();
-        else if (wallObject != null) wallObject.isBroken = false;
-
         if (data.pipeBroken && pipeObject != null) pipeObject.BreakPipe();
-        else if (pipeObject != null) pipeObject.isBroken = false;
-
         if (data.generatorBroken && generatorObject != null) generatorObject.BreakGenerator();
-        else if (generatorObject != null) generatorObject.isBroken = false;
-
         if (data.telescopeBroken && telescopeObject != null) telescopeObject.BreakTelescope();
-        else if (telescopeObject != null) telescopeObject.isBroken = false;
-
         if (data.communicateBroken && communicateObject != null) communicateObject.BreakCommunicate();
-        else if (communicateObject != null) communicateObject.isBroken = false;
-
         if (data.lantonBroken && lantonObject != null) lantonObject.BreakLanton();
-        else if (lantonObject != null) lantonObject.isBroken = false;
     }
 
     private void StartNewGame()
     {
+        // â˜… ìˆ˜ì •: debugStartDayëŠ” ì—ë””í„° í…ŒìŠ¤íŠ¸ìš©ìœ¼ë¡œë§Œ ì‚¬ìš©
+#if UNITY_EDITOR
         currentDay = debugStartDay;
-        isTodayMissionComplete = false;
+        Debug.Log($"[GameManager - DEV MODE] Day {debugStartDay}ë¶€í„° ì‹œì‘");
+#else
+        currentDay = 1;  // ë¹Œë“œì—ì„œëŠ” í•­ìƒ 1ì¼ì°¨ë¶€í„° ì‹œì‘
+        Debug.Log("[GameManager] ìƒˆ ê²Œì„ ì‹œì‘ - Day 1");
+#endif
 
+        isTodayMissionComplete = false;
         RefreshGameStat(true);
         SaveGameData();
-
-        Debug.Log($"[»õ °ÔÀÓ ½ÃÀÛ] Day {currentDay}");
     }
 
     private void CheckForNewDayEvents()
     {
+        // ê° ë‚ ì§œì— ë§ëŠ” ê¸°ê¸° ê³ ì¥ ë°œìƒ
         if (currentDay == 1 || currentDay == 8) waterPurifierObject?.BreakPurifier();
         if (currentDay == 2 || currentDay == 9) foodDeviceObject?.BreakDevice();
         if (currentDay == 3 || currentDay == 10) wallObject?.BreakWall();
@@ -305,19 +269,14 @@ public class GameManager : MonoBehaviour
 
     public void OnDeviceFixed(string deviceName)
     {
-        Debug.Log($"[OnDeviceFixed] {deviceName} ¼ö¸®µÊ. (ÇöÀç Day: {currentDay})");
-
         if (isTodayMissionComplete) return;
 
-        bool missionMatch = CheckMissionMatch(deviceName);
-
-        if (missionMatch)
+        if (CheckMissionMatch(deviceName))
         {
             isTodayMissionComplete = true;
             UpdateTaskUI();
             SaveGameData();
-
-            UIManager.Instance?.ShowNotification("¿À´ÃÀÇ ÁÖ¿ä ¼ö¸®¸¦ ¿Ï·áÇß´Ù.\nÀÏ±â¸¦ ¾²°í ½¯ ¼ö ÀÖ´Ù.");
+            UIManager.Instance?.ShowNotification("ì˜¤ëŠ˜ì˜ ì£¼ìš” ìˆ˜ë¦¬ë¥¼ ì™„ë£Œí–ˆë‹¤.\nì¼ê¸°ë¥¼ ì“°ê³  ì‰´ ìˆ˜ ìˆë‹¤.");
         }
     }
 
@@ -338,53 +297,30 @@ public class GameManager : MonoBehaviour
         if (taskTextUI == null) return;
         int missionIndex = currentDay - 1;
 
-        // 1. ¸ğµç ¹Ì¼Ç ¿Ï·á ½Ã
-        if (missionIndex < 0 || missionIndex >= missionTextsByDay.Count ||
-            string.IsNullOrWhiteSpace(missionTextsByDay[missionIndex]))
+        if (missionIndex < 0 || missionIndex >= missionTextsByDay.Count || string.IsNullOrWhiteSpace(missionTextsByDay[missionIndex]))
         {
-            // [¼öÁ¤] ÃÊ·Ï»ö(#00FF00) -> Èò»ö(#FFFFFF)À¸·Î º¯°æ
-            taskTextUI.text = "<color=#FFFFFF>¸ğµç »ıÁ¸ ÀÓ¹« ¿Ï·á!</color>";
+            taskTextUI.text = "<color=#FFFFFF>ëª¨ë“  ìƒì¡´ ì„ë¬´ ì™„ë£Œ!</color>";
             return;
         }
 
-        // 2. ¿À´Ã ¹Ì¼Ç ¿Ï·á »óÅÂÀÏ ¶§
         if (isTodayMissionComplete)
         {
-            // [¼öÁ¤] ÃÊ·Ï»ö(#00FF00) -> Èò»ö(#FFFFFF)À¸·Î º¯°æ
-            // ½Ã¾È¿¡ ¸ÂÃç ±ò²ûÇÏ°Ô Èò»öÀ¸·Î Ç¥½Ã
-            taskTextUI.text = $"<color=#FFFFFF>Day {currentDay} ÀÓ¹« ¿Ï·á</color>\n<size=80%>(Ã¥»ó¿¡¼­ ÀÏ±â¸¦ ÀÛ¼ºÇÏ¼¼¿ä)</size>";
+            taskTextUI.text = "<color=#FFFFFF>ëª©í‘œ: ì¼ê¸° ì‘ì„±</color>";
             return;
         }
 
-        // 3. ¹Ì¼Ç ÁøÇà ÁßÀÏ ¶§ (±âº» »óÅÂ)
-        string rawText = missionTextsByDay[missionIndex];
-
-        // [¼öÁ¤] "¸ñÇ¥:" ºÎºĞµµ ³ë¶õ»öÀÌ ¾Æ´Ï¶ó ½Ã¾È´ë·Î 'Èò»ö(#FFFFFF)'À¸·Î ÅëÀÏ
-        // ¸¸¾à "¸ñÇ¥:" ºÎºĞ¸¸ »öÀ» ´Ù¸£°Ô ÇÏ°í ½Í´Ù¸é #FFFFFF ºÎºĞÀ» ´Ù¸¥ »ö ÄÚµå·Î ¹Ù²Ù¼¼¿ä.
-        string coloredText = rawText.Replace("¸ñÇ¥:", "<color=#FFFFFF>¸ñÇ¥:</color><color=#FFFFFF>");
-
-        // È¤½Ã ¸ğ¸£´Ï ÀüÃ¼¸¦ Èò»öÀ¸·Î °¨½ÎÁİ´Ï´Ù.
-        taskTextUI.text = $"<color=#FFFFFF>{coloredText}</color>";
+        taskTextUI.text = $"<color=#FFFFFF>{missionTextsByDay[missionIndex]}</color>";
     }
 
     private void UpdateDayUI()
     {
-        if (dayTextUI != null)
-        {
-            // [¼öÁ¤] µğÀÚÀÎ ½Ã¾È(#FFFFFF)¿¡ ¸ÂÃç Èò»ö °­Á¦ Àû¿ë
-            dayTextUI.text = $"<color=#FFFFFF>DAY {currentDay}</color>";
-        }
+        if (dayTextUI != null) dayTextUI.text = $"<color=#FFFFFF>DAY {currentDay}</color>";
     }
 
     public int GetCurrentDay() => currentDay;
 
-    public bool IsTodayMissionComplete()
-    {
-        if (isTodayMissionComplete) return true;
-
-        int missionIndex = currentDay - 1;
-        if (missionIndex < 0 || missionIndex >= missionTextsByDay.Count) return true;
-
-        return string.IsNullOrWhiteSpace(missionTextsByDay[missionIndex]);
-    }
+    /// <summary>
+    /// ì˜¤ëŠ˜ì˜ ë¯¸ì…˜ ì™„ë£Œ ì—¬ë¶€ ë°˜í™˜
+    /// </summary>
+    public bool IsTodayMissionComplete() => isTodayMissionComplete;
 }

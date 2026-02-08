@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 public class DialogueHistoryManager : MonoBehaviour
 {
@@ -9,59 +10,83 @@ public class DialogueHistoryManager : MonoBehaviour
     public GameObject historyPanel;
     public Transform contentArea;
     public ScrollRect scrollRect;
-    public GameObject templateObject; // Hierarchy의 Content 안에 있는 그 텍스트
+    public GameObject templateObject;
 
     [Header("Speaker Styles")]
-    public SpeakerStyle speakerA;
-    public SpeakerStyle speakerB;
+    public List<SpeakerStyle> speakerProfiles = new List<SpeakerStyle>();
+
+    public SpeakerStyle narrationStyle;
 
     [System.Serializable]
     public class SpeakerStyle
     {
-        public string nameID;
+        public string nameID; // ID (예: "???", "{userName}", "Player")
         public Color textColor = Color.white;
         public TMP_FontAsset font;
     }
 
     private bool isOpen = false;
+    private string playerName;
+    private const string PLAYER_NAME_KEY = "PlayerName";
+    private Color defaultColor = Color.white; // 템플릿의 기본 색상 저장용
 
     void Awake()
     {
-        // [수정] 원본 템플릿은 게임 시작하자마자 비활성화해서 숨깁니다.
-        // 부모를 해제하지 않아야 Instantiate 시 UI 설정이 그대로 복사됩니다.
-        if (templateObject != null)
+        if (templateObject == null)
         {
+            Debug.LogError("[DialogueHistoryManager] Template Object가 연결되지 않았습니다! Inspector를 확인해주세요.");
+        }
+        else
+        {
+            // 템플릿의 원래 색상을 저장해둡니다. (스타일 없을 때 사용)
+            var textComp = templateObject.GetComponentInChildren<TMP_Text>();
+            if (textComp != null) defaultColor = textComp.color;
+
             templateObject.SetActive(false);
         }
+
+        if (contentArea == null)
+        {
+            Debug.LogError("[DialogueHistoryManager] Content Area가 연결되지 않았습니다!");
+        }
+    }
+
+    void Start()
+    {
+        playerName = PlayerPrefs.GetString(PLAYER_NAME_KEY, "플레이어");
     }
 
     public void ToggleHistory()
     {
         isOpen = !isOpen;
-        historyPanel.SetActive(isOpen);
-        if (isOpen) StartCoroutine(AutoScrollToBottom());
+        if (historyPanel != null)
+        {
+            historyPanel.SetActive(isOpen);
+            if (isOpen && scrollRect != null) StartCoroutine(AutoScrollToBottom());
+        }
     }
 
     public void CloseHistory()
     {
         isOpen = false;
-        historyPanel.SetActive(false);
+        if (historyPanel != null) historyPanel.SetActive(false);
+    }
+
+    string GetProcessedText(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        return text.Replace("{userName}", playerName);
     }
 
     public void AddLog(string rawLine)
     {
-        if (templateObject == null) return;
+        if (templateObject == null || contentArea == null) return;
 
-        // 1. 템플릿 복사 (부모는 contentArea로 지정)
         GameObject newLog = Instantiate(templateObject, contentArea);
-
-        // 2. 복사본은 활성화 (원본은 꺼져있으므로)
         newLog.SetActive(true);
 
-        // 3. 텍스트 컴포넌트 찾기
         TMP_Text tmp = newLog.GetComponentInChildren<TMP_Text>();
 
-        // [오류 방지] 여기서 tmp가 null이면 에러를 확실히 잡아줍니다.
         if (tmp == null)
         {
             Debug.LogError("TemplateObject 내부에 TextMeshPro 컴포넌트가 없습니다!");
@@ -73,30 +98,66 @@ public class DialogueHistoryManager : MonoBehaviour
 
         if (parts.Length > 1)
         {
-            string speakerName = parts[0].Trim();
-            string dialogue = parts[1].Trim();
+            string rawSpeaker = parts[0].Trim();
+            string rawDialogue = parts[1].Trim();
 
-            if (speakerName == speakerA.nameID) ApplyStyle(tmp, speakerA, speakerName, dialogue);
-            else if (speakerName == speakerB.nameID) ApplyStyle(tmp, speakerB, speakerName, dialogue);
+            // 화면 표시 이름 처리
+            string displaySpeaker = rawSpeaker;
+
+            if (rawSpeaker == "{userName}")
+            {
+                displaySpeaker = playerName;
+            }
             else
             {
-                tmp.text = rawLine;
-                tmp.color = Color.white;
+                displaySpeaker = GetProcessedText(rawSpeaker);
+            }
+
+            string displayDialogue = GetProcessedText(rawDialogue);
+
+            // 스타일 검색 로직
+            SpeakerStyle foundStyle = null;
+            if (speakerProfiles != null)
+            {
+                foundStyle = speakerProfiles.Find(x => x.nameID == rawSpeaker);
+
+            }
+
+            if (foundStyle != null)
+            {
+                ApplyStyle(tmp, foundStyle, displaySpeaker, displayDialogue);
+            }
+            else
+            {
+                // 스타일을 못 찾으면 템플릿 원래 색상 사용
+                tmp.text = $"<b>{displaySpeaker}</b> : {displayDialogue}";
+                tmp.color = defaultColor;
             }
         }
         else
         {
-            // 이름 없는 경우 주인공 스타일 적용
-            tmp.color = speakerA.textColor;
-            if (speakerA.font != null) tmp.font = speakerA.font;
-            tmp.text = rawLine;
+            // 지문/내레이션 처리
+            string processedLine = GetProcessedText(rawLine);
+
+            if (narrationStyle != null && !string.IsNullOrEmpty(narrationStyle.nameID))
+            {
+                tmp.color = narrationStyle.textColor;
+                if (narrationStyle.font != null) tmp.font = narrationStyle.font;
+            }
+            else
+            {
+                // 스타일 없으면 기본 색상
+                tmp.color = defaultColor;
+            }
+
+            tmp.text = processedLine;
         }
 
-        // 레이아웃 강제 갱신 (텍스트 겹침 방지)
         Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(contentArea.GetComponent<RectTransform>());
+        if (contentArea.GetComponent<RectTransform>() != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentArea.GetComponent<RectTransform>());
 
-        if (isOpen) StartCoroutine(AutoScrollToBottom());
+        if (isOpen && scrollRect != null) StartCoroutine(AutoScrollToBottom());
     }
 
     void ApplyStyle(TMP_Text target, SpeakerStyle style, string name, string text)
@@ -110,6 +171,6 @@ public class DialogueHistoryManager : MonoBehaviour
     IEnumerator AutoScrollToBottom()
     {
         yield return new WaitForEndOfFrame();
-        scrollRect.verticalNormalizedPosition = 0f;
+        if (scrollRect != null) scrollRect.verticalNormalizedPosition = 0f;
     }
 }

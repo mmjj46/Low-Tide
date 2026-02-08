@@ -611,14 +611,11 @@ MonoBehaviour:
   contentArea: {fileID: 594139427}
   scrollRect: {fileID: 1158250449}
   templateObject: {fileID: 861402624}
-  speakerA:
-    nameID: UserName
-    textColor: {r: 1, g: 1, b: 1, a: 1}
-    font: {fileID: 11400000, guid: c349951d088daac4ea47bcef7312da12, type: 2}
-  speakerB:
+  speakerProfiles: []
+  narrationStyle:
     nameID: 
     textColor: {r: 1, g: 1, b: 1, a: 1}
-    font: {fileID: 11400000, guid: c349951d088daac4ea47bcef7312da12, type: 2}
+    font: {fileID: 0}
 --- !u!1 &420886705
 GameObject:
   m_ObjectHideFlags: 0
@@ -892,7 +889,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 60.01}
+  m_SizeDelta: {x: 0, y: 25.1}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &594139428
 MonoBehaviour:
@@ -1473,10 +1470,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uAC00\uB098\uB2E4\uB77C\nrk\u314F\u3153\u314F\u3141"
+  m_text: "\uAC00\uB098\uB2E4\uB77C\n"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: fbcd6ddabef1c544484270e4edaa4fdd, type: 2}
-  m_sharedMaterial: {fileID: 596628060211560622, guid: fbcd6ddabef1c544484270e4edaa4fdd, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
+  m_sharedMaterial: {fileID: 1737826118211513878, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1566,8 +1563,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 787.92175, y: -30.005}
-  m_SizeDelta: {x: 1575.8435, y: 60.01}
+  m_AnchoredPosition: {x: 787.92175, y: -12.55}
+  m_SizeDelta: {x: 1575.8435, y: 25.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &861402628
 MonoBehaviour:
@@ -1948,10 +1945,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD14D\uC2A4\uD2B8\uD14D\uC2A4\uD2B8"
+  m_text: "\uD14D\uC2A4\uD2B8\uD14D\uC2A4\uD2B8\n\uD14D\uC2A4\uD2B8\uD14D\uC2A4\uD2B8"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c349951d088daac4ea47bcef7312da12, type: 2}
-  m_sharedMaterial: {fileID: 323129517616897965, guid: c349951d088daac4ea47bcef7312da12, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
+  m_sharedMaterial: {fileID: 1737826118211513878, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1981,13 +1978,13 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 25
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: 20
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -2041,8 +2038,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -267, y: 361}
-  m_SizeDelta: {x: 534, y: 50}
+  m_AnchoredPosition: {x: -268.7798, y: 361.31757}
+  m_SizeDelta: {x: 480, y: 50.6351}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1135265442
 GameObject:
@@ -3682,8 +3679,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uD14D\uC2A4\uD2B8\uD14D\uC2A4\uD2B8"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c349951d088daac4ea47bcef7312da12, type: 2}
-  m_sharedMaterial: {fileID: 323129517616897965, guid: c349951d088daac4ea47bcef7312da12, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
+  m_sharedMaterial: {fileID: 1737826118211513878, guid: fa3ffa41cc5ac104eb9fe78d8d5d5037, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3713,13 +3710,13 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 25
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: 20
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0

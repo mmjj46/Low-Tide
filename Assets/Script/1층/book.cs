@@ -44,6 +44,11 @@ public class book : MonoBehaviour, IInteractable
         // 미션 완료 시 일기장 씬으로 이동
         GoToDiaryScene();
     }
+    public string GetInteractText()
+    {
+        // 화면에 띄우고 싶은 텍스트를 리턴합니다.
+        return "조사: 일기 작성";
+    }
 
     void GoToDiaryScene()
     {

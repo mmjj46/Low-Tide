@@ -83,6 +83,19 @@ public class Telescope : MonoBehaviour, IInteractable
         }
     }
 
+    public string GetInteractText()
+    {
+        // 벽이 깨졌을 때와 아닐 때의 텍스트를 다르게 리턴합니다.
+        if (isBroken)
+        {
+            return "조사: 망원경 렌즈 닦기";
+        }
+        else
+        {
+            return "조사: 망원경";
+        }
+    }
+
     // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakTelescope()
     {

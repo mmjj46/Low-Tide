@@ -56,6 +56,19 @@ public class FoodDevice : MonoBehaviour, IInteractable
         }
     }
 
+    public string GetInteractText()
+    {
+        
+        if (isBroken)
+        {
+            return "조사: 식량 제조 장치 수리";
+        }
+        else
+        {
+            return "조사: 식량 제조 장치";
+        }
+    }
+
     public void BreakDevice()
     {
         // ★★★ [가장 중요한 수정] ★★★

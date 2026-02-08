@@ -69,7 +69,17 @@ public class Pipe : MonoBehaviour, IInteractable
             TryConnect();
         }
     }
-
+    public string GetInteractText()
+    {
+        if (isBroken)
+        {
+            return "조사: 파이프 수리";
+        }
+        else
+        {
+            return "조사: 파이프";
+        }
+    }
     // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakPipe()
     {

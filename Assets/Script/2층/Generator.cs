@@ -67,6 +67,18 @@ public class Generator : MonoBehaviour, IInteractable
             TryRepair();
         }
     }
+    public string GetInteractText()
+    {
+        // 벽이 깨졌을 때와 아닐 때의 텍스트를 다르게 리턴합니다.
+        if (isBroken)
+        {
+            return "조사: 발전기 수리";
+        }
+        else
+        {
+            return "조사: 발전기";
+        }
+    }
 
     // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakGenerator()

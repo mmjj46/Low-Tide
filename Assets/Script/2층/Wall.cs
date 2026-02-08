@@ -69,7 +69,19 @@ public class Wall : MonoBehaviour, IInteractable
             TryRepair();
         }
     }
-
+    // Wall.cs의 GetInteractText 부분을 이렇게 수정해 보세요!
+    public string GetInteractText()
+    {
+        // 벽이 깨졌을 때와 아닐 때의 텍스트를 다르게 리턴합니다.
+        if (isBroken)
+        {
+            return "조사: 벽 수리";
+        }
+        else
+        {
+            return "조사: 벽";
+        }
+    }
     // ★ GameManager가 아침에 호출하는 고장 함수
     public void BreakWall()
     {

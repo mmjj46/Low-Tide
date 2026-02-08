@@ -34,4 +34,10 @@ public class WaterProofInteraction : MonoBehaviour, IInteractable
             Debug.LogError("UIManager.Instance가 null입니다!");
         }
     }
+
+    public string GetInteractText()
+    {
+        // 화면에 띄우고 싶은 텍스트를 리턴합니다.
+        return "조사: 방수복";
+    }
 }

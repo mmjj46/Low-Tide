@@ -53,6 +53,18 @@ public class Lanton : MonoBehaviour, IInteractable
             TryRepair();
         }
     }
+    public string GetInteractText()
+    {
+        // 벽이 깨졌을 때와 아닐 때의 텍스트를 다르게 리턴합니다.
+        if (isBroken)
+        {
+            return "조사: 등명기 전구 교체";
+        }
+        else
+        {
+            return "조사: 등명기";
+        }
+    }
 
     // GameManager 등에서 고장낼 때 호출
     public void BreakLanton()

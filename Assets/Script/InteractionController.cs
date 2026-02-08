@@ -1,19 +1,20 @@
-using UnityEngine;
-using TMPro;
+using UnityEngine; // 'Ray'를 인식하기 위해 반드시 필요합니다.
+using TMPro;       // TextMeshPro를 사용하기 위해 필요합니다.
 
+// 유니티 스크립트는 반드시 아래와 같은 클래스 구조 안에 있어야 합니다.
 public class InteractionController : MonoBehaviour
 {
-    public float interactionDistance = 3f; // 상호작용 가능한 최대 거리
-    public GameObject interactionUI; // 비활성화해둔 상호작용 UI
-    public TextMeshProUGUI interactionText; // 상호작용 UI의 텍스트
+    [Header("설정")]
+    public float interactionDistance = 3f;
+    public GameObject interactionUI;
+    public TextMeshProUGUI interactionText;
 
-    [Header("Sound Settings")]
-    public AudioClip interactSound; // ★ 1. 여기에 효과음 파일을 드래그해서 넣으세요
-    private AudioSource audioSource; // 소리를 재생할 컴포넌트
+    [Header("사운드")]
+    public AudioClip interactSound;
+    private AudioSource audioSource;
 
     void Start()
     {
-        // ★ 2. 게임 시작 시 AudioSource 컴포넌트를 가져오거나 없으면 만듭니다.
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
@@ -21,39 +22,38 @@ public class InteractionController : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
+        // 민정 님이 작성하신 레이캐스트 로직
         Ray ray = new Ray(transform.position, transform.forward);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, interactionDistance))
         {
-            if (hit.collider.CompareTag("Interactable"))
-            {
-                interactionUI.SetActive(true);
+            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
 
-                // F키 입력 확인
+            if (interactable != null)
+            {
+                if (interactionUI != null) interactionUI.SetActive(true);
+                if (interactionText != null) interactionText.text = interactable.GetInteractText();
+
                 if (Input.GetKeyDown(KeyCode.F))
                 {
-                    // ★ 3. 상호작용할 때 소리 재생
                     if (audioSource != null && interactSound != null)
                     {
-                        audioSource.PlayOneShot(interactSound); // 효과음 1회 재생
+                        audioSource.PlayOneShot(interactSound);
                     }
-
-                    // 레이캐스트에 맞은 오브젝트에게 "Interact" 함수 실행 요청
-                    hit.collider.SendMessage("Interact");
+                    interactable.Interact();
                 }
             }
             else
             {
-                interactionUI.SetActive(false);
+                if (interactionUI != null) interactionUI.SetActive(false);
             }
         }
         else
         {
-            interactionUI.SetActive(false);
+            if (interactionUI != null) interactionUI.SetActive(false);
         }
     }
 }

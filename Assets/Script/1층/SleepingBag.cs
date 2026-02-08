@@ -32,6 +32,11 @@ public class SleepingBag : MonoBehaviour, IInteractable
         UIManager.Instance.ShowNotification("잠을 자서 다음 날로 넘어갑니다.");
         StartCoroutine(ProcessSleep(gm));
     }
+    public string GetInteractText()
+    {
+        // 화면에 띄우고 싶은 텍스트를 리턴합니다.
+        return "조사: 잠들기";
+    }
 
     IEnumerator ProcessSleep(GameManager gm)
     {
