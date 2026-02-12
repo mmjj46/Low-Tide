@@ -1,145 +1,94 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
-using TMPro;
 
 public class OpeningSettingManager : MonoBehaviour
 {
-    [Header("UI Reference")]
+    [Header("UI Objects")]
     public GameObject settingsPanel;
 
-    [Header("Resolution Buttons")]
-    public Button windowedBtn;
-    public Button fullScreenBtn;
+    [Header("Audio Settings")]
+    public AudioMixer mainMixer;
 
-    // ★ [수정됨] 이미지 컴포넌트가 아니라 '게임 오브젝트' 자체를 연결합니다.
-    [Header("Windowed Button Objects")]
-    public GameObject windowedOnObj;  // 창모드 켜짐 (ON) 상태의 오브젝트
-    public GameObject windowedOffObj; // 창모드 꺼짐 (OFF) 상태의 오브젝트
+    // ★ 소리 재생 쿨타임 변수 추가
+    private float lastSfxPlayTime = 0f;
 
-    [Header("Full Screen Button Objects")]
-    public GameObject fullScreenOnObj;  // 전체화면 켜짐 (ON) 상태의 오브젝트
-    public GameObject fullScreenOffObj; // 전체화면 꺼짐 (OFF) 상태의 오브젝트
-
-    [Header("Language Buttons")]
-    public Button englishBtn;
-    public Button koreanBtn;
-    public Image englishBtnBg;
-    public Image koreanBtnBg;
-
-    [Header("Volume Sliders")]
-    public Slider bgmSlider;
-    public Slider sfxSlider;
-
-    [Header("Audio Mixer")]
-    public AudioMixer audioMixer;
-
-    public Color activeColor = new Color(0.5f, 0.5f, 0.5f);
-    public Color inactiveColor = new Color(0f, 0f, 0f);
-
-    void Start()
+    private void Start()
     {
-        InitializeSettings();
-
-        windowedBtn.onClick.AddListener(() => SetResolution(false));
-        fullScreenBtn.onClick.AddListener(() => SetResolution(true));
-
-        englishBtn.onClick.AddListener(() => SetLanguage("English"));
-        koreanBtn.onClick.AddListener(() => SetLanguage("Korean"));
-
-        bgmSlider.onValueChanged.AddListener(SetBGMVolume);
-        sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
     }
 
-    void InitializeSettings()
+    private void Update()
     {
-        bool isFullScreen = Screen.fullScreen;
-        UpdateResolutionUI(isFullScreen);
-
-        string lang = PlayerPrefs.GetString("Language", "Korean");
-        UpdateLanguageUI(lang);
-
-        float bgmVol = PlayerPrefs.GetFloat("BGM_Volume", 0.75f);
-        float sfxVol = PlayerPrefs.GetFloat("SFX_Volume", 0.75f);
-
-        bgmSlider.value = bgmVol;
-        sfxSlider.value = sfxVol;
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (settingsPanel != null && settingsPanel.activeSelf) CloseSettings();
+        }
     }
 
     public void OpenSettings()
     {
-        settingsPanel.SetActive(true);
+        if (settingsPanel != null) settingsPanel.SetActive(true);
+        // 패널 열릴 때 소리 내고 싶으면 아래 주석 해제
+        // PlayUISound(); 
     }
 
     public void CloseSettings()
     {
-        settingsPanel.SetActive(false);
-        PlayerPrefs.Save();
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        PlayUISound(); // 닫기 버튼 소리
     }
 
-    public void SetResolution(bool isFullScreen)
+    // --- 해상도 & 언어 ---
+    public void SetWindowedMode()
     {
-        Screen.fullScreen = isFullScreen;
-        UpdateResolutionUI(isFullScreen);
+        Screen.SetResolution(1280, 720, FullScreenMode.Windowed);
+        PlayUISound(); // 클릭 소리
     }
 
-    // ★★★ [핵심 수정] 오브젝트를 껐다 켰다 하는 방식
-    void UpdateResolutionUI(bool isFullScreen)
+    public void SetFullScreen()
     {
-        if (isFullScreen)
-        {
-            // 전체화면 모드일 때:
-            // 전체화면 ON 켜기 / OFF 끄기
-            if (fullScreenOnObj != null) fullScreenOnObj.SetActive(true);
-            if (fullScreenOffObj != null) fullScreenOffObj.SetActive(false);
-
-            // 창모드 ON 끄기 / OFF 켜기
-            if (windowedOnObj != null) windowedOnObj.SetActive(false);
-            if (windowedOffObj != null) windowedOffObj.SetActive(true);
-        }
-        else
-        {
-            // 창 모드일 때:
-            // 전체화면 ON 끄기 / OFF 켜기
-            if (fullScreenOnObj != null) fullScreenOnObj.SetActive(false);
-            if (fullScreenOffObj != null) fullScreenOffObj.SetActive(true);
-
-            // 창모드 ON 켜기 / OFF 끄기
-            if (windowedOnObj != null) windowedOnObj.SetActive(true);
-            if (windowedOffObj != null) windowedOffObj.SetActive(false);
-        }
+        Screen.SetResolution(1920, 1080, FullScreenMode.FullScreenWindow);
+        PlayUISound(); // 클릭 소리
     }
 
-    // (나머지 언어, 볼륨 관련 코드는 동일함)
-    public void SetLanguage(string lang)
+    public void SetLanguageEnglish() { PlayUISound(); }
+    public void SetLanguageKorean() { PlayUISound(); }
+    public void QuitGame() { PlayUISound(); Application.Quit(); }
+
+    // --- 볼륨 조절 ---
+
+    public void SetBGMVolume(float volume)
     {
-        PlayerPrefs.SetString("Language", lang);
-        UpdateLanguageUI(lang);
+        if (mainMixer == null) return;
+        if (volume <= 0.0001f) mainMixer.SetFloat("BGM", -80f);
+        else mainMixer.SetFloat("BGM", Mathf.Log10(volume) * 20);
     }
 
-    void UpdateLanguageUI(string lang)
+    public void SetSFXVolume(float volume)
     {
-        if (lang == "English")
+        if (mainMixer == null) return;
+
+        // 1. 믹서 볼륨 조절
+        if (volume <= 0.0001f) mainMixer.SetFloat("SFX", -80f);
+        else mainMixer.SetFloat("SFX", Mathf.Log10(volume) * 20);
+
+        // 2. ★ 소리 크기 확인용 재생 (0.15초마다 한 번씩만 재생)
+        if (Time.unscaledTime - lastSfxPlayTime > 0.15f)
         {
-            englishBtnBg.color = activeColor;
-            koreanBtnBg.color = inactiveColor;
-        }
-        else
-        {
-            englishBtnBg.color = inactiveColor;
-            koreanBtnBg.color = activeColor;
+            PlayUISound();
+            lastSfxPlayTime = Time.unscaledTime;
         }
     }
 
-    public void SetBGMVolume(float value)
+    // ★ 편하게 쓰려고 만든 도우미 함수
+    private void PlayUISound()
     {
-        PlayerPrefs.SetFloat("BGM_Volume", value);
-        if (audioMixer != null) audioMixer.SetFloat("BGM", Mathf.Log10(Mathf.Max(value, 0.0001f)) * 20);
-    }
-
-    public void SetSFXVolume(float value)
-    {
-        PlayerPrefs.SetFloat("SFX_Volume", value);
-        if (audioMixer != null) audioMixer.SetFloat("SFX", Mathf.Log10(Mathf.Max(value, 0.0001f)) * 20);
+        // SoundManager가 있고, 클릭음(clickClip)이 설정되어 있다면 재생
+        if (SoundManager.Instance != null && SoundManager.Instance.clickClip != null)
+        {
+            SoundManager.Instance.PlaySFX(SoundManager.Instance.clickClip);
+        }
     }
 }
