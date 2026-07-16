@@ -66,6 +66,7 @@ public class Pipe : MonoBehaviour, IInteractable
             }
 
             // 고장났으면 연결 시도
+            UIManager.Instance.ShowNotification("물을 쓰려면 파이프를 연결해야 한다.");
             TryConnect();
         }
     }
@@ -157,6 +158,12 @@ public class Pipe : MonoBehaviour, IInteractable
         PlaySound(workingSound);
 
         UIManager.Instance.ShowNotification("파이프를 연결했다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         if (gameManager != null)
         {

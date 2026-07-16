@@ -51,7 +51,7 @@ public class Generator : MonoBehaviour, IInteractable
         {
             // ★ 정상 상태: 웅웅거리는 작동음 재생
             PlaySound(workingSound);
-            UIManager.Instance.ShowNotification("발전기가 웅웅거리며 작동 중이다.");
+            UIManager.Instance.ShowNotification("등대에서 사용하는 전기를 생산하는 발전기이다. 정상 작동 중이다.");
         }
         else
         {
@@ -64,6 +64,7 @@ public class Generator : MonoBehaviour, IInteractable
             }
 
             // 고장났으면 수리 시도
+            UIManager.Instance.ShowNotification("등대에서 사용하는 전기를 생산하는 발전기이다. 작동하지 않는다.");
             TryRepair();
         }
     }
@@ -153,6 +154,12 @@ public class Generator : MonoBehaviour, IInteractable
         PlaySound(workingSound);
 
         UIManager.Instance.ShowNotification("발전기를 수리했다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         if (gameManager != null)
         {

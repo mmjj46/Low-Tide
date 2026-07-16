@@ -51,7 +51,7 @@ public class FoodDevice : MonoBehaviour, IInteractable
         else
         {
             // 고장 났을 때 클릭해도 소리는 다시 켜지 않음 (메세지만 출력)
-            UIManager.Instance.ShowNotification("식량 배급 장치가 고장났다. 작동하지 않는다.");
+            UIManager.Instance.ShowNotification("식량을 제조하는 장치이다. 작동하지 않는다.");
             TryRepair();
         }
     }
@@ -148,6 +148,12 @@ public class FoodDevice : MonoBehaviour, IInteractable
 
         PlaySound(workingSound);
         UIManager.Instance.ShowNotification("식량 제조 장치를 수리했다. 맛있는 냄새가 난다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         if (gameManager != null)
         {

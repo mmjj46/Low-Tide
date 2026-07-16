@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -29,6 +30,11 @@ public class GameManager : MonoBehaviour
     [Header("Environment")]
     public WeatherManager weatherManager;
 
+    [Header("Day & Night Settings")]
+    public Material daySkybox;
+    public Material nightSkybox;
+    public Light directionalLight; // 태양빛
+
     [Header("Save Settings")]
     public Transform playerTransform;
     private string savePath;
@@ -36,9 +42,21 @@ public class GameManager : MonoBehaviour
     private int currentDay = 1;
     private bool isTodayMissionComplete = false;
 
+    [Header("--- Animation & Scene Transition ---")]
+    public Animator blinkAnimator;
+    public AudioClip blinkSound;
+    public float blinkWaitTime = 2.0f;
+
+    [Tooltip("전환할 이름 입력 씬의 정확한 파일 이름을 적어주세요.")]
+    public string nameInputSceneName = "nameinput";
+
     [Header("--- Dev Test (Editor Only) ---")]
+    [Tooltip("체크하면 기존 세이브를 무시하고 설정한 날짜로 강제 시작합니다.")]
+    public bool forceDebugDay = false;
     [Range(1, 15)]
     public int debugStartDay = 1;
+
+    private static bool hasJumpedToNameEntry = false;
 
     void Awake()
     {
@@ -55,60 +73,30 @@ public class GameManager : MonoBehaviour
 
     IEnumerator Initialize()
     {
-        // 0. ★★★ 새 게임 플래그 파일 확인 (최우선) ★★★
         string flagPath = Application.persistentDataPath + "/newgame.flag";
-        Debug.Log($"[GameManager] 새 게임 플래그 파일 확인: {flagPath}");
 
+        // 1. 새 게임 플래그 체크 (최우선)
         if (File.Exists(flagPath))
         {
-            Debug.Log("[GameManager] ✓✓✓ 새 게임 플래그 감지! 강제 새 게임 시작 ✓✓✓");
-
-            // 플래그 파일 삭제
-            try
-            {
-                File.Delete(flagPath);
-                Debug.Log("[GameManager] 플래그 파일 삭제 완료");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[GameManager] 플래그 파일 삭제 실패: {e.Message}");
-            }
-
-            // 혹시 남은 세이브 파일도 삭제
-            if (File.Exists(savePath))
-            {
-                File.Delete(savePath);
-                Debug.Log("[GameManager] 남아있던 세이브 파일 삭제");
-            }
-
+            if (File.Exists(flagPath)) File.Delete(flagPath);
+            if (File.Exists(savePath)) File.Delete(savePath);
             StartNewGame();
             yield break;
         }
 
-        // 1. 다음 날 진행 플래그 확인
-        if (PlayerPrefs.GetInt("NextDayPending", 0) == 1)
-        {
-            LoadGameData();
-            yield return null;
-            currentDay++;
-            isTodayMissionComplete = false;
-            RefreshGameStat(true);
-            SaveGameData();
-            PlayerPrefs.SetInt("NextDayPending", 0);
-            PlayerPrefs.Save();
-            yield break;
-        }
-
-        // 2. 미니게임 복귀 확인
+        // 2. 미니게임 복귀 체크
         string miniGameTarget = PlayerPrefs.GetString("MiniGameTarget", "");
         int miniGameSuccess = PlayerPrefs.GetInt("MiniGameSuccess", 0);
 
         if (!string.IsNullOrEmpty(miniGameTarget) && miniGameSuccess == 1)
         {
             LoadGameData();
-            // UI 업데이트를 위한 2프레임 대기
             yield return null;
             yield return null;
+
+            // 미니게임에서 복귀한 직후 통신 완료 상태 로그 찍기
+            Debug.Log($"[GameManager] 미니게임 복귀 직후 CommunicationCompleted 상태: {PlayerPrefs.GetInt("CommunicationCompleted", 0)}");
+
             ProcessMiniGameReturn(miniGameTarget);
             PlayerPrefs.SetString("MiniGameTarget", "");
             PlayerPrefs.SetInt("MiniGameSuccess", 0);
@@ -116,16 +104,84 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        // 3. 이어하기 확인 (파일이 실제로 있을 때만)
-        Debug.Log($"[GameManager] 세이브 파일 존재 여부: {File.Exists(savePath)}");
+        // 3. 강제 테스트 모드 체크 (에디터 전용)
+#if UNITY_EDITOR
+        if (forceDebugDay)
+        {
+            Debug.Log($"[GameManager - DEV MODE] 세이브 무시! Day {debugStartDay} 강제 테스트 모드 실행");
+            
+            StartNewGame();
+
+            if (debugStartDay == 8 && !hasJumpedToNameEntry)
+            {
+                hasJumpedToNameEntry = true; 
+                
+                if (blinkAnimator != null) blinkAnimator.SetTrigger("DoBlink");
+                if (blinkSound != null && SoundManager.Instance != null) SoundManager.Instance.PlaySFX(blinkSound);
+                
+                yield return new WaitForSeconds(blinkWaitTime);
+                SceneManager.LoadScene(nameInputSceneName); 
+                yield break;
+            }
+            else
+            {
+                // ★ 안전장치: 이름 입력 씬을 거쳐서 다시 GameScene으로 돌아왔을 때, 
+                // 다른 스크립트에 의해 통신 플래그가 1로 변했다면 여기서 강제로 0으로 초기화합니다.
+                if (debugStartDay == 8 && hasJumpedToNameEntry)
+                {
+                    Debug.Log("[GameManager] 이름 입력 후 복귀 확인. 통신 상태를 0으로 강제 초기화합니다.");
+                    PlayerPrefs.SetInt("CommunicationCompleted", 0);
+                    PlayerPrefs.Save();
+                }
+
+                RefreshGameStat(true);
+                yield break;
+            }
+        }
+#endif
+
+        // 4. 다음 날 취침 후 기상 체크
+        if (PlayerPrefs.GetInt("NextDayPending", 0) == 1)
+        {
+            LoadGameData();
+            yield return null;
+            currentDay++;
+            isTodayMissionComplete = false;
+
+            PlayerPrefs.SetInt("DiaryCompleted", 0);
+            PlayerPrefs.SetInt("CommunicationCompleted", 0);
+            PlayerPrefs.Save();
+
+            RefreshGameStat(true);
+            SaveGameData();
+            PlayerPrefs.SetInt("NextDayPending", 0);
+            PlayerPrefs.Save();
+
+            if (blinkAnimator != null)
+            {
+                blinkAnimator.SetTrigger("DoBlink");
+                if (blinkSound != null && SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX(blinkSound);
+                }
+            }
+
+            if (currentDay == 8)
+            {
+                yield return new WaitForSeconds(blinkWaitTime);
+                SceneManager.LoadScene(nameInputSceneName);
+            }
+
+            yield break;
+        }
+
+        // 5. 일반적인 기존 데이터 로드
         if (File.Exists(savePath))
         {
-            Debug.Log("[GameManager] 기존 데이터 로드 중...");
             LoadGameData();
         }
         else
         {
-            Debug.Log("[GameManager] 세이브 파일 없음 -> 새 게임 시작");
             StartNewGame();
         }
     }
@@ -141,7 +197,7 @@ public class GameManager : MonoBehaviour
             case "Generator": generatorObject?.ForceFixFromMiniGame(); break;
             case "Telescope": telescopeObject?.ForceFixFromMiniGame(); break;
             case "Communicate": communicateObject?.ForceFixFromMiniGame(); break;
-            case "Lanton": lantonObject?.ForceFixFromMiniGame(); break;
+            case "Lanton": lantonObject?.BreakLanton(); break;
         }
     }
 
@@ -151,23 +207,18 @@ public class GameManager : MonoBehaviour
         UpdateDayUI();
         if (triggerEvents) CheckForNewDayEvents();
         if (weatherManager != null) weatherManager.SetWeather(currentDay);
+
+        if (isTodayMissionComplete) ChangeToNight();
+        else ChangeToDay();
     }
 
     public void SaveGameData()
     {
-        // playerTransform이 null이면 찾기 시도
         if (playerTransform == null)
         {
             GameObject player = GameObject.FindWithTag("Player");
-            if (player != null)
-            {
-                playerTransform = player.transform;
-            }
-            else
-            {
-                Debug.LogWarning("[GameManager] Player Transform을 찾을 수 없습니다. 저장 취소.");
-                return;
-            }
+            if (player != null) playerTransform = player.transform;
+            else return;
         }
 
         try
@@ -181,7 +232,6 @@ public class GameManager : MonoBehaviour
             );
 
             File.WriteAllText(savePath, JsonUtility.ToJson(data, true));
-            Debug.Log($"[GameManager] 게임 저장 완료 - Day {currentDay}");
         }
         catch (System.Exception e)
         {
@@ -193,7 +243,6 @@ public class GameManager : MonoBehaviour
     {
         if (!File.Exists(savePath))
         {
-            Debug.Log("[GameManager] 세이브 파일 없음 - 새 게임 시작");
             StartNewGame();
             return;
         }
@@ -206,7 +255,6 @@ public class GameManager : MonoBehaviour
             currentDay = data.day;
             isTodayMissionComplete = data.isMissionComplete;
 
-            // 플레이어 위치 복원
             if (playerTransform != null)
             {
                 CharacterController cc = playerTransform.GetComponent<CharacterController>();
@@ -217,11 +265,9 @@ public class GameManager : MonoBehaviour
 
             RestoreObjectStates(data);
             RefreshGameStat(false);
-            Debug.Log($"[GameManager] 게임 로드 완료 - Day {currentDay}");
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogError($"[GameManager] 로드 실패: {e.Message}");
             StartNewGame();
         }
     }
@@ -240,28 +286,34 @@ public class GameManager : MonoBehaviour
 
     private void StartNewGame()
     {
-        // ★ 수정: debugStartDay는 에디터 테스트용으로만 사용
+        // ★ 추가: 에디터에서 바로 시작하거나 새 게임 플래그를 받았을 때도 단서 기록을 모두 날립니다!
+        PlayerPrefs.DeleteAll();
+
 #if UNITY_EDITOR
-        currentDay = debugStartDay;
-        Debug.Log($"[GameManager - DEV MODE] Day {debugStartDay}부터 시작");
+        if (forceDebugDay) currentDay = debugStartDay;
+        else currentDay = 1; 
 #else
-        currentDay = 1;  // 빌드에서는 항상 1일차부터 시작
-        Debug.Log("[GameManager] 새 게임 시작 - Day 1");
+        currentDay = 1;
 #endif
 
         isTodayMissionComplete = false;
+
+        // 데이터가 다 지워졌으니 기상 필수 플래그만 다시 세팅합니다.
+        PlayerPrefs.SetInt("DiaryCompleted", 0);
+        PlayerPrefs.SetInt("CommunicationCompleted", 0);
+        PlayerPrefs.Save(); // 저장 확정
+
         RefreshGameStat(true);
         SaveGameData();
     }
 
     private void CheckForNewDayEvents()
     {
-        // 각 날짜에 맞는 기기 고장 발생
         if (currentDay == 1 || currentDay == 8) waterPurifierObject?.BreakPurifier();
         if (currentDay == 2 || currentDay == 9) foodDeviceObject?.BreakDevice();
         if (currentDay == 3 || currentDay == 10) wallObject?.BreakWall();
         if (currentDay == 4 || currentDay == 11) pipeObject?.BreakPipe();
-        if (currentDay == 5 || currentDay == 12) generatorObject?.BreakGenerator();
+        if (currentDay == 5 || 12 == currentDay) generatorObject?.BreakGenerator();
         if (currentDay == 6 || currentDay == 13) telescopeObject?.BreakTelescope();
         if (currentDay == 7 || currentDay == 14) communicateObject?.BreakCommunicate();
         if (currentDay == 15) lantonObject?.BreakLanton();
@@ -274,9 +326,18 @@ public class GameManager : MonoBehaviour
         if (CheckMissionMatch(deviceName))
         {
             isTodayMissionComplete = true;
+            ChangeToNight();
             UpdateTaskUI();
             SaveGameData();
-            UIManager.Instance?.ShowNotification("오늘의 주요 수리를 완료했다.\n일기를 쓰고 쉴 수 있다.");
+
+            if (currentDay >= 7)
+            {
+                UIManager.Instance?.ShowNotification("오늘의 주요 수리를 완료했다.\n이제 통신기를 사용해보자.");
+            }
+            else
+            {
+                UIManager.Instance?.ShowNotification("오늘의 주요 수리를 완료했다.\n일기를 쓰고 쉴 수 있다.");
+            }
         }
     }
 
@@ -305,7 +366,20 @@ public class GameManager : MonoBehaviour
 
         if (isTodayMissionComplete)
         {
-            taskTextUI.text = "<color=#FFFFFF>목표: 일기 작성</color>";
+            if (currentDay < 7)
+            {
+                if (PlayerPrefs.GetInt("DiaryCompleted", 0) == 1) taskTextUI.text = "<color=#FFFFFF>목표: 취침</color>";
+                else taskTextUI.text = "<color=#FFFFFF>목표: 일기 작성</color>";
+            }
+            else
+            {
+                // 👇 추가된 추적 로그: 목표UI를 그릴 때 실제 저장된 통신 판정 값을 찍어봅니다.
+                int commState = PlayerPrefs.GetInt("CommunicationCompleted", 0);
+                Debug.Log($"[UpdateTaskUI] 현재 Day {currentDay} / 통신 완료 상태(PlayerPrefs): {commState}");
+
+                if (commState == 1) taskTextUI.text = "<color=#FFFFFF>목표: 취침</color>";
+                else taskTextUI.text = "<color=#FFFFFF>목표: 통신</color>";
+            }
             return;
         }
 
@@ -318,9 +392,21 @@ public class GameManager : MonoBehaviour
     }
 
     public int GetCurrentDay() => currentDay;
-
-    /// <summary>
-    /// 오늘의 미션 완료 여부 반환
-    /// </summary>
     public bool IsTodayMissionComplete() => isTodayMissionComplete;
+
+    public void ChangeToNight()
+    {
+        if (nightSkybox != null) RenderSettings.skybox = nightSkybox;
+        if (directionalLight != null) directionalLight.intensity = 0.2f;
+        DynamicGI.UpdateEnvironment();
+        if (weatherManager != null) weatherManager.SetNightMode(true);
+    }
+
+    public void ChangeToDay()
+    {
+        if (daySkybox != null) RenderSettings.skybox = daySkybox;
+        if (directionalLight != null) directionalLight.intensity = 1.0f;
+        DynamicGI.UpdateEnvironment();
+        if (weatherManager != null) weatherManager.SetNightMode(false);
+    }
 }

@@ -13,6 +13,7 @@ public class PipeGameManager : MonoBehaviour
 
     [Header("사운드")]
     public AudioClip clearSound; // ★ 1. 효과음 연결
+    public AudioClip pipeClickSound; // ★ 추가: 파이프 클릭 효과음
     private AudioSource audioSource;
 
     void Awake()
@@ -26,8 +27,21 @@ public class PipeGameManager : MonoBehaviour
         // 1인칭 게임에서 넘어왔으면 커서가 잠겨있을 수 있으므로 풀어줍니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+    }
+
+    // ★ 추가: 파이프 스크립트(Pipe1)에서 클릭할 때마다 호출할 함수
+    public void PlayClickSound()
+    {
+        // 게임이 이미 끝난 상태면 소리를 내지 않음 (원치 않으시면 이 줄 삭제)
+        if (isGameOver) return;
+
+        if (pipeClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(pipeClickSound);
+        }
     }
 
     public void CheckWin()
@@ -58,7 +72,7 @@ public class PipeGameManager : MonoBehaviour
 
     IEnumerator ReturnToMainGame()
     {
-        // 클리어 UI를 감상할 시간 2초 주기
+        // 클리어 UI를 감상할 시간 1초 주기
         if (clearSound != null) audioSource.PlayOneShot(clearSound);
         yield return new WaitForSeconds(1.0f);
 
@@ -69,6 +83,19 @@ public class PipeGameManager : MonoBehaviour
         PlayerPrefs.Save();
 
         // ★ 6. GameScene 로드 (이름이 다르다면 수정해주세요!)
+        SceneManager.LoadScene("GameScene");
+    }
+
+    // ★★★ 추가: Exit 버튼에서 호출할 함수 ★★★
+    public void ExitMiniGame()
+    {
+        Debug.Log("미니게임을 취소하고 메인 게임 씬으로 돌아갑니다.");
+
+        // 미니게임을 완료하지 않고 나가는 것이므로 성공 여부를 0(실패/취소)으로 저장
+        PlayerPrefs.SetInt("MiniGameSuccess", 0);
+        PlayerPrefs.Save();
+
+        // 메인 게임 씬으로 복귀
         SceneManager.LoadScene("GameScene");
     }
 }

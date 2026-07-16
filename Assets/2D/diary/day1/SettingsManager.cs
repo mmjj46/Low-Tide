@@ -10,6 +10,9 @@ public class SettingsManager : MonoBehaviour
     [Header("UI Panels")]
     public GameObject pauseMenuCanvas;
 
+    // 👇 대화 기록 패널 추가
+    public GameObject logPanel;
+
     [Header("Audio Settings")]
     public AudioMixer mainMixer;
 
@@ -220,4 +223,36 @@ public class SettingsManager : MonoBehaviour
     /// 일시정지 상태 확인
     /// </summary>
     public bool IsPaused() => isPaused;
+
+    // ==========================================
+    // 새로 추가된 버튼 기능들
+    // ==========================================
+
+    /// <summary>
+    /// MAIN MENU 버튼: startscene으로 돌아가기
+    /// </summary>
+    public void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        isPaused = false;
+
+        Debug.Log("[SettingsManager] 메인 메뉴로 돌아갑니다.");
+        SceneManager.LoadScene("startscene");
+    }
+
+    /// <summary>
+    /// DIALOGUE HISTORY 버튼: Day7 씬의 logpanel 켜기
+    /// </summary>
+    public void OpenDialogueHistory()
+    {
+        if (logPanel != null)
+        {
+            logPanel.SetActive(true);
+            Debug.Log("[SettingsManager] 대화 기록 패널을 켭니다.");
+        }
+        else
+        {
+            Debug.LogWarning("[SettingsManager] 인스펙터에 logPanel이 할당되지 않았습니다!");
+        }
+    }
 }

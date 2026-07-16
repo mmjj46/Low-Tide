@@ -15,9 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/EndScene.unity
     guid: 49da942fb66998944a8dfa73e6c24346
   - enabled: 1
-    path: Assets/2D/Dot/LineConnecting.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 1
     path: Assets/2D/Pipe/PipeConnecting.unity
     guid: 4e264383f15d70f4ea5e605cf4f575a3
   - enabled: 1
@@ -30,6 +27,18 @@ EditorBuildSettings:
     path: Assets/2D/StainErasing/StainErasing.unity
     guid: 385a52a23dedaf641b6a44ee18362183
   - enabled: 1
-    path: Assets/2D/diary/day1/DiaryScene.unity
+    path: Assets/Scenes/DiaryScene.unity
     guid: aac189e60061b8245837f9982c5d1397
+  - enabled: 1
+    path: Assets/2D/wall/wall.unity
+    guid: d3ef4b41565494747bddb25ae9c6de13
+  - enabled: 1
+    path: Assets/Scenes/Day7.unity
+    guid: 73545b7dbf9ff4446ba722d1270d50a4
+  - enabled: 1
+    path: Assets/Scenes/3LineConnecting.unity
+    guid: 2a9f0b60f7bfdc84e967c7325eee5bd8
+  - enabled: 1
+    path: Assets/Scenes/nameinput.unity
+    guid: f5c28122ee82b4c4dbb60c356c3bc023
   m_configObjects: {}

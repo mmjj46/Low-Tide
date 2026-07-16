@@ -1,69 +1,82 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public enum WeatherType
 {
-    Sunny,   // ¸¼À½
-    Rainy,   // ºñ
-    Stormy,  // ÆøÇ³
-    Foggy    // ¾È°³
+    Sunny,   // ë§‘ìŒ
+    Rainy,   // ë¹„
+    Stormy,  // í­í’
+    Foggy    // ì•ˆê°œ
 }
 
 public class WeatherManager : MonoBehaviour
 {
-    [Header("--- UI ÀÌ¹ÌÁö ---")]
+    [Header("--- UI ì´ë¯¸ì§€ ---")]
     public Image weatherIconUI;
 
-    [Header("--- ³¯¾¾ ¾ÆÀÌÄÜ ---")]
+    [Header("--- ë‚® ë‚ ì”¨ ì•„ì´ì½˜ ---")]
     public Sprite sunnySprite;
     public Sprite rainySprite;
     public Sprite stormySprite;
     public Sprite foggySprite;
 
-    [Header("--- ³¯¾¾ »ç¿îµå ---")]
+    [Header("--- ë°¤ ë‚ ì”¨ ì•„ì´ì½˜ ---")]
+    public Sprite nightSprite;
+
+    [Header("--- ë‚ ì”¨ ì‚¬ìš´ë“œ ---")]
     public AudioClip sunnySound;
     public AudioClip rainySound;
     public AudioClip stormySound;
     public AudioClip foggySound;
 
-    // [»èÁ¦µÊ] ÀÌÁ¦ ÀÌ Ä£±¸´Â Á÷Á¢ ½ºÇÇÄ¿¸¦ µé°í ´Ù´ÏÁö ¾Ê½À´Ï´Ù.
-    // public AudioSource bgmAudioSource; 
+    // ğŸ‘‡ ì¶”ê°€: ë°¤ ì „ìš© ë°°ê²½ìŒì•…(BGM) ìŠ¬ë¡¯
+    public AudioClip nightSound;
 
-    [Header("--- ³¯Â¥º° ³¯¾¾ ÆĞÅÏ ---")]
+    [Header("--- ë‚ ì§œë³„ ë‚ ì”¨ íŒ¨í„´ ---")]
     public WeatherType[] dailyWeatherPattern;
 
-    // GameManager°¡ È£ÃâÇÏ´Â ÇÔ¼ö
+    private WeatherType currentWeather;
+    private bool isNight = false;
+
     public void SetWeather(int day)
     {
-        // ³¯¾¾ ÆĞÅÏ ¹è¿­ ¹üÀ§ ¾È¿¡¼­ ¼øÈ¯ÇÏµµ·Ï ¼³Á¤
         int index = (day - 1) % dailyWeatherPattern.Length;
-        WeatherType todayWeather = dailyWeatherPattern[index];
+        currentWeather = dailyWeatherPattern[index];
 
-        Debug.Log($"Day {day} ³¯¾¾ º¯°æ: {todayWeather}");
+        Debug.Log($"Day {day} ë‚ ì”¨ ë³€ê²½: {currentWeather}");
 
-        UpdateUI(todayWeather);
-        UpdateSound(todayWeather);
+        UpdateUI();
+        UpdateSound(currentWeather);
     }
 
-    void UpdateUI(WeatherType weather)
+    public void SetNightMode(bool nightMode)
+    {
+        isNight = nightMode;
+        UpdateUI();
+
+        // ğŸ‘‡ ì¶”ê°€: ë‚®/ë°¤ ìƒíƒœê°€ ë°”ë€” ë•Œ ìŒì•…ë„ ì¦‰ì‹œ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
+        UpdateSound(currentWeather);
+    }
+
+    void UpdateUI()
     {
         if (weatherIconUI == null) return;
 
-        switch (weather)
+        // ë°¤ì´ë©´ ë‚ ì”¨ ë¬»ì§€ë„ ë”°ì§€ì§€ë„ ì•Šê³  ë¬´ì¡°ê±´ ë°¤ ì•„ì´ì½˜ 1ê°œë¡œ ê³ ì •!
+        if (isNight)
         {
-            case WeatherType.Sunny:
-                weatherIconUI.sprite = sunnySprite;
-                break;
-            case WeatherType.Rainy:
-                weatherIconUI.sprite = rainySprite;
-                break;
-            case WeatherType.Stormy:
-                weatherIconUI.sprite = stormySprite;
-                break;
-            case WeatherType.Foggy:
-                weatherIconUI.sprite = foggySprite;
-                break;
+            weatherIconUI.sprite = nightSprite;
+            return;
+        }
+
+        // ë‚®ì¼ ë•Œë§Œ ë‚ ì”¨ì— ë”°ë¼ ì•„ì´ì½˜ì„ ë°”ê¿”ì¤ë‹ˆë‹¤.
+        switch (currentWeather)
+        {
+            case WeatherType.Sunny: weatherIconUI.sprite = sunnySprite; break;
+            case WeatherType.Rainy: weatherIconUI.sprite = rainySprite; break;
+            case WeatherType.Stormy: weatherIconUI.sprite = stormySprite; break;
+            case WeatherType.Foggy: weatherIconUI.sprite = foggySprite; break;
         }
     }
 
@@ -71,33 +84,32 @@ public class WeatherManager : MonoBehaviour
     {
         AudioClip clip = null;
 
-        // 1. ³¯¾¾¿¡ ¸Â´Â À½¾Ç °í¸£±â
-        switch (weather)
+        // ğŸ‘‡ ì¶”ê°€: ë°¤ ìƒíƒœì¼ ë•ŒëŠ” ë‚ ì”¨ BGM ëŒ€ì‹  ë¬´ì¡°ê±´ ë°¤ BGMì„ ì„ íƒí•©ë‹ˆë‹¤.
+        if (isNight)
         {
-            case WeatherType.Sunny:
-                clip = sunnySound;
-                break;
-            case WeatherType.Rainy:
-                clip = rainySound;
-                break;
-            case WeatherType.Stormy:
-                clip = stormySound;
-                break;
-            case WeatherType.Foggy:
-                clip = foggySound;
-                break;
+            clip = nightSound;
+        }
+        else
+        {
+            // ë‚®ì¼ ë•Œë§Œ ë‚ ì”¨ë³„ BGM ì„ íƒ
+            switch (weather)
+            {
+                case WeatherType.Sunny: clip = sunnySound; break;
+                case WeatherType.Rainy: clip = rainySound; break;
+                case WeatherType.Stormy: clip = stormySound; break;
+                case WeatherType.Foggy: clip = foggySound; break;
+            }
         }
 
-        // 2. [º¯°æ] SoundManager¿¡°Ô "ÀÌ À½¾Ç Æ²¾îÁà" ¶ó°í ¿äÃ»ÇÏ±â
         if (SoundManager.Instance != null)
         {
-            // PlayBGM ÇÔ¼ö ¾È¿¡ "°°Àº ³ë·¡¸é ´Ù½Ã ¾È Æ´" ±â´ÉÀÌ ÀÌ¹Ì µé¾îÀÖ½À´Ï´Ù.
-            // ±×·¡¼­ ±×³É ´øÁ®ÁÖ±â¸¸ ÇÏ¸é ¾Ë¾Æ¼­ Ã³¸®ÇÕ´Ï´Ù!
+            // SoundManager ë‚´ë¶€ì— "ë™ì¼í•œ ì˜¤ë””ì˜¤ í´ë¦½ì´ë©´ ì¬ìƒí•˜ì§€ ì•ŠìŒ" ë¡œì§ì´ ìˆìœ¼ë¯€ë¡œ
+            // ë°¤ì—ì„œ ë°¤ìœ¼ë¡œ, í˜¹ì€ ë‚® ë™ì¼ ë‚ ì”¨ì—ì„œ ì—°ë‹¬ì•„ í˜¸ì¶œë˜ì–´ë„ ì¤‘ë³µ ì¬ìƒë˜ì§€ ì•Šê³  ìì—°ìŠ¤ëŸ½ê²Œ ìœ ì§€ë©ë‹ˆë‹¤.
             SoundManager.Instance.PlayBGM(clip);
         }
         else
         {
-            Debug.LogWarning("SoundManager°¡ ¾À¿¡ ¾ø½À´Ï´Ù! BGMÀ» Àç»ıÇÒ ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogWarning("SoundManagerê°€ ì”¬ì— ì—†ìŠµë‹ˆë‹¤! BGMì„ ì¬ìƒí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
         }
     }
 }

@@ -62,7 +62,7 @@ public class WaterPurifier : MonoBehaviour, IInteractable
                 audioSource.Play();
             }
 
-            UIManager.Instance.ShowNotification("정수기가 고장났다. 물이 나오지 않는다.");
+            UIManager.Instance.ShowNotification("마실 물을 정수하는 장치이다. 작동하지 않는다.");
             TryRepair();
         }
     }
@@ -149,6 +149,12 @@ public class WaterPurifier : MonoBehaviour, IInteractable
         PlaySound(workingSound);
 
         UIManager.Instance.ShowNotification("정수기를 수리했다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         if (gameManager != null)
         {

@@ -1,34 +1,39 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // ★ 씬 이동을 위해 필수!
+using UnityEngine.SceneManagement;
 
 public class Communicate : MonoBehaviour, IInteractable
 {
-    // true = 고장(먹통), false = 정상(통신 가능)
-    // 초기값 true: 시작부터 고장난 상태
     public bool isBroken = true;
 
-    // ★ 연결할 미니게임 씬 이름 (기본값 "Random")
-    // (만약 통신 관련 미니게임 씬이 따로 있다면 인스펙터에서 이름을 변경하세요!)
-    public string miniGameSceneName = "LineConnecting";
+    public string miniGameSceneName = "3LineConnecting";
+    public string communicationSceneName = "CommunicationScene";
 
-    private string myTargetName = "Communicate"; // ★ GameManager가 식별할 이름
+    private string myTargetName = "Communicate";
+    private string saveKey = "Communicate_IsFixed";
     private GameManager gameManager;
+
+    // 대화 완료 여부를 추적할 GameManager의 핵심 키와 일치시킵니다.
+    private const string COMM_COMPLETED_KEY = "CommunicationCompleted";
 
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
+
+        if (PlayerPrefs.GetInt(saveKey, 0) == 1)
+        {
+            isBroken = false;
+            Debug.Log("Communicate: 이 장치는 이미 수리된 상태입니다.");
+        }
+
         if (gameManager == null)
         {
             Debug.LogError("Communicate: GameManager를 찾을 수 없습니다!");
         }
-
-        // ★ CheckMiniGameReturn 제거 (GameManager가 처리)
     }
 
 #if UNITY_EDITOR
     void Update()
     {
-        // [테스트] 숫자 7키로 강제 수리 시도
         if (Input.GetKeyDown(KeyCode.Alpha7) && isBroken)
         {
             Debug.Log("Communicate: [테스트] 강제 수리 시도");
@@ -37,94 +42,100 @@ public class Communicate : MonoBehaviour, IInteractable
     }
 #endif
 
-    // F키 (상호작용)
     public void Interact()
     {
-        Debug.Log($"Communicate: Interact() 호출됨. isBroken = {isBroken}");
+        Debug.Log($"Communicate: Interact() 호출됨. 현재 isBroken = {isBroken}");
 
-        if (!isBroken) // 정상 작동
+        int currentDay = (gameManager != null) ? gameManager.GetCurrentDay() : PlayerPrefs.GetInt("CurrentDay", 1);
+
+        // 수리가 완료된 상태라면 통신 프로세스 진행
+        if (!isBroken)
         {
-            UIManager.Instance.ShowNotification("정상 작동하는 통신기이다. 이제 아무 말이나 해 보자.");
+            // ★ 수정: GameManager가 관리하고 초기화해주는 COMM_COMPLETED_KEY("CommunicationCompleted")를 검사합니다.
+            if (PlayerPrefs.GetInt(COMM_COMPLETED_KEY, 0) == 1)
+            {
+                UIManager.Instance.ShowNotification("이미 통신을 완료했다.");
+                return;
+            }
+
+
+            if (gameManager != null)
+            {
+                PlayerPrefs.SetInt("CurrentDay", currentDay);
+            }
+
+            // ★ 수정: 통신 씬으로 넘어가기 전, GameManager와 동기화되도록 완료 플래그를 1로 세웁니다.
+            PlayerPrefs.SetInt(COMM_COMPLETED_KEY, 1);
+
+            // (선택사항) 혹시 다른 곳에서 날짜별 기록이 필요할 수 있으니 기존 일자별 키도 같이 저장해둡니다.
+            string commDayKey = "CommunicateDone_Day_" + currentDay;
+            PlayerPrefs.SetInt(commDayKey, 1);
+
+            PlayerPrefs.Save();
+
+            Debug.Log($"Communicate: Day {currentDay} 통신 시작.");
+            SceneManager.LoadScene(communicationSceneName);
         }
-        else // 고장남
+        else // 고장난 상태
         {
-            UIManager.Instance.ShowNotification("고장난 통신기이다. 고치면 누군가와 대화할 수 있을지도 모른다.");
-            // 수리 시도 (미니게임 이동)
-            TryRepair();
+            if (currentDay != 7 && currentDay != 14)
+            {
+                UIManager.Instance.ShowNotification("고장난 통신기이다. 특정 날짜에 수리할 수 있을 것 같다.");
+            }
+            else
+            {
+                UIManager.Instance.ShowNotification("고장난 통신기이다. 고치면 누군가와 대화할 수 있을지도 모른다.");
+                TryRepair();
+            }
         }
     }
+
     public string GetInteractText()
     {
-        // 벽이 깨졌을 때와 아닐 때의 텍스트를 다르게 리턴합니다.
-        if (isBroken)
-        {
-            return "조사: 통신기 수리";
-        }
-        else
-        {
-            return "조사: 통신기";
-        }
+        return isBroken ? "조사: 통신기 수리" : "조사: 통신기 사용";
     }
 
-    // GameManager 등에서 고장낼 때 호출
     public void BreakCommunicate()
     {
         isBroken = true;
-        Debug.Log("Communicate: 통신기 고장 발생!");
+        PlayerPrefs.SetInt(saveKey, 0);
+        PlayerPrefs.Save();
+        Debug.Log("Communicate: 통신기 강제 고장 발생!");
     }
 
-    // 수리 시도 -> 미니게임 씬으로 이동
     public void TryRepair()
     {
-        if (!isBroken)
-        {
-            UIManager.Instance.ShowNotification("이미 수리되었다.");
-            return;
-        }
-
-        if (gameManager == null)
-        {
-            Debug.LogError("Communicate: GameManager가 없습니다!");
-            return;
-        }
+        if (!isBroken) return;
+        if (gameManager == null) return;
 
         int currentDay = gameManager.GetCurrentDay();
 
-        // ★ 7일차 또는 14일차가 아니라면, 수리를 거부
         if (currentDay != 7 && currentDay != 14)
         {
             UIManager.Instance.ShowNotification("지금은 이걸 수리할 때가 아니다.");
-            Debug.Log("Communicate: 7일차 또는 14일차가 아니므로 수리 거부");
             return;
         }
 
-        Debug.Log($"Communicate: Day {currentDay} - 미니게임 이동");
-
-        // 1. 현재 게임 상태 저장
         gameManager.SaveGameData();
 
-        // 2. "나 Communicate 고치러 간다"라고 메모 남기기
         PlayerPrefs.SetString("MiniGameTarget", myTargetName);
         PlayerPrefs.SetInt("MiniGameSuccess", 0);
         PlayerPrefs.Save();
 
-        // 3. 미니게임 씬 로드
         SceneManager.LoadScene(miniGameSceneName);
     }
 
-    /// <summary>
-    /// ★ GameManager에서 미니게임 복귀 시 호출하는 메서드
-    /// </summary>
     public void ForceFixFromMiniGame()
     {
-        Debug.Log("Communicate: 미니게임 성공 - 강제 수리");
+        Debug.Log("Communicate: 미니게임 성공 데이터 기록");
 
-        isBroken = false; // 수리 완료
+        isBroken = false;
+        PlayerPrefs.SetInt(saveKey, 1);
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
 
-        // 1. 알림 메시지
         UIManager.Instance.ShowNotification("통신기를 수리했다.");
 
-        // 2. 게임 매니저에 보고
         if (gameManager != null)
         {
             gameManager.OnDeviceFixed(myTargetName);

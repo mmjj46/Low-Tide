@@ -65,4 +65,17 @@ public class RandomManager : MonoBehaviour
 
         SceneManager.LoadScene("GameScene");
     }
+
+    // ★★★ 추가: Exit 버튼에서 호출할 함수 ★★★
+    public void ExitMiniGame()
+    {
+        Debug.Log("미니게임을 취소하고 메인 게임 씬으로 돌아갑니다.");
+
+        // 미니게임을 완료하지 않고 나가는 것이므로 성공 여부를 0(실패/취소)으로 확실히 저장
+        PlayerPrefs.SetInt("MiniGameSuccess", 0);
+        PlayerPrefs.Save();
+
+        // 메인 게임 씬으로 복귀
+        SceneManager.LoadScene("GameScene");
+    }
 }

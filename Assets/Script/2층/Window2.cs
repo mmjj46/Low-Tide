@@ -6,7 +6,7 @@ public class Window2Interaction : MonoBehaviour, IInteractable
     {
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.ShowNotification("끝없는 바다가 눈앞에 펼쳐져 있다.");
+            UIManager.Instance.ShowNotification("아무리 보아도 푸른 바다와 하늘만 보일 뿐이다.");
         }
         else
         {

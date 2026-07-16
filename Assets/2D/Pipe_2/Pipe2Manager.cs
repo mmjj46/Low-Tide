@@ -14,7 +14,8 @@ public class Pipe2Manager : MonoBehaviour
     public bool isGameOver = false;
 
     [Header("사운드")]
-    public AudioClip clearSound; // ★ 1. 효과음 연결
+    public AudioClip clearSound;      // 클리어 효과음
+    public AudioClip pipeClickSound; // ★ 추가: 파이프 클릭 효과음
     private AudioSource audioSource;
 
     void Awake()
@@ -32,7 +33,6 @@ public class Pipe2Manager : MonoBehaviour
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
         // 2. 씬에 있는 모든 파이프를 자동으로 찾아서 배열에 넣기
-        // (혹시 인스펙터가 비어있어도 여기서 채워줍니다)
         if (pipes == null || pipes.Length == 0)
         {
             pipes = FindObjectsOfType<Pipe2Script>();
@@ -40,7 +40,7 @@ public class Pipe2Manager : MonoBehaviour
 
         Debug.Log($"파이프 {pipes.Length}개를 감지했습니다.");
 
-        // ★ 3. 시작하자마자 모든 파이프의 초기 상태(정답인지 아닌지)를 검사
+        // 3. 시작하자마자 모든 파이프의 초기 상태 검사
         foreach (var pipe in pipes)
         {
             pipe.ForceCheck();
@@ -57,6 +57,16 @@ public class Pipe2Manager : MonoBehaviour
         }
     }
 
+    // ★ 추가: 클릭 소리를 재생하는 함수
+    public void PlayClickSound()
+    {
+        if (isGameOver) return;
+        if (pipeClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(pipeClickSound);
+        }
+    }
+
     void DetectAndRotatePipe()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -68,6 +78,8 @@ public class Pipe2Manager : MonoBehaviour
 
             if (pipe != null)
             {
+                // 소리 재생 후 회전 실행
+                PlayClickSound();
                 pipe.RotatePipe();
             }
         }
@@ -75,7 +87,6 @@ public class Pipe2Manager : MonoBehaviour
 
     public void CheckClear()
     {
-        // ★★★ 핵심 수정: 파이프 목록이 비어있으면 절대 클리어되지 않음 ★★★
         if (pipes == null || pipes.Length == 0)
         {
             Debug.LogWarning("파이프 목록이 비어있어서 클리어 확인을 할 수 없습니다!");
@@ -84,10 +95,8 @@ public class Pipe2Manager : MonoBehaviour
 
         foreach (Pipe2Script pipe in pipes)
         {
-            if (pipe.isFixed == false) return; // 하나라도 연결 안 됐으면 여기서 멈춤
+            if (pipe.isFixed == false) return;
         }
-
-        // --- 여기까지 왔다면 모두 연결된 것 ---
 
         Debug.Log("🎉 게임 클리어! 축하합니다!");
         isGameOver = true;
@@ -101,12 +110,23 @@ public class Pipe2Manager : MonoBehaviour
     IEnumerator ReturnToMainGame()
     {
         if (clearSound != null) audioSource.PlayOneShot(clearSound);
-
-        yield return new WaitForSeconds(1.0f); // 소리 들을 시간 확보
+        yield return new WaitForSeconds(1.0f);
 
         Debug.Log("메인 게임으로 돌아갑니다.");
 
         PlayerPrefs.SetInt("MiniGameSuccess", 1);
+        PlayerPrefs.Save();
+
+        SceneManager.LoadScene("GameScene");
+    }
+
+    // ★★★ 추가: Exit 버튼에서 호출할 함수 ★★★
+    public void ExitMiniGame()
+    {
+        Debug.Log("미니게임을 취소하고 메인 게임 씬으로 돌아갑니다.");
+
+        // 성공 기록을 0으로 초기화하고 복귀
+        PlayerPrefs.SetInt("MiniGameSuccess", 0);
         PlayerPrefs.Save();
 
         SceneManager.LoadScene("GameScene");

@@ -9,7 +9,7 @@ public class Lanton : MonoBehaviour, IInteractable
 
     // ★ 연결할 미니게임 씬 이름 (기본값 "Random")
     // 만약 전구 켜기 게임 등을 따로 만드셨다면 인스펙터에서 이름을 변경하세요!
-    public string miniGameSceneName = "Random";
+    public string miniGameSceneName = "3LineConnecting";
 
     private string myTargetName = "Lanton"; // ★ GameManager가 식별할 이름
     private GameManager gameManager;
@@ -48,7 +48,7 @@ public class Lanton : MonoBehaviour, IInteractable
         }
         else // 고장남
         {
-            UIManager.Instance.ShowNotification("신기하게 생긴 등명기이다. 고치면 불을 밝힐 수 있다.");
+            UIManager.Instance.ShowNotification("신기하게 생긴 등명기이다. 아직은 고치지 않아도 될 것 같다.");
             // 수리 시도
             TryRepair();
         }
@@ -123,6 +123,12 @@ public class Lanton : MonoBehaviour, IInteractable
 
         // 1. 알림 메시지 (감동적인 멘트 유지)
         UIManager.Instance.ShowNotification("세상이 밝아졌다. 당신의 마음도 조금이나마 밝아진다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         // 2. 게임 매니저에 보고
         if (gameManager != null)

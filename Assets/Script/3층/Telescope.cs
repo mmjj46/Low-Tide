@@ -76,7 +76,7 @@ public class Telescope : MonoBehaviour, IInteractable
                 audioSource.Play();
             }
 
-            UIManager.Instance.ShowNotification("렌즈가 너무 더러워서 아무것도 보이지 않는다.");
+            UIManager.Instance.ShowNotification("쓴 지 오래된 망원경이다. 렌즈 너머가 잘 보이지 않는다.");
 
             // 수리 시도
             TryRepair();
@@ -176,6 +176,12 @@ public class Telescope : MonoBehaviour, IInteractable
 
         // 1. 알림 메시지
         UIManager.Instance.ShowNotification("망원경 렌즈를 깨끗이 닦았다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         // 2. 게임 매니저에 보고
         if (gameManager != null)

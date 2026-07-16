@@ -11,7 +11,7 @@ public class FirstPersonController : MonoBehaviour
     private Transform playerCamera;
     private float xRotation = 0f;
 
-    private Vector3 velocity; // 중력 누적값
+    private Vector3 velocity; // 중력 및 점프 수직 속도
 
     void Start()
     {
@@ -23,7 +23,7 @@ public class FirstPersonController : MonoBehaviour
 
     void Update()
     {
-        // 마우스 회전
+        // 1. 마우스 회전
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
@@ -33,19 +33,30 @@ public class FirstPersonController : MonoBehaviour
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
 
-        // 이동
+        // 2. 바닥 체크 및 중력 초기화
+        if (controller.isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f; // 땅에 붙어있을 때 안정적으로 하향 벡터 유지
+        }
+
+        // 3. 이동 입력 방향 계산 (이 단계에서는 Move하지 않음)
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         Vector3 move = transform.right * h + transform.forward * v;
-        controller.Move(move * speed * Time.deltaTime);
 
-        // 중력 적용
-        if (controller.isGrounded && velocity.y < 0)
+        // 4. 점프 실행 (Input.GetKeyDown과 KeyCode.Space로 직관적으로 변경)
+        if (Input.GetKeyDown(KeyCode.Space) && controller.isGrounded)
         {
-            velocity.y = -2f; // 땅 위에 있을 때는 y값 고정
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            Debug.Log("[FirstPersonController] 점프 성공! 수직 속도 증가");
         }
 
+        // 5. 중력 지속 누적
         velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+
+        // 6. ★★★ 핵심 수정: 수평 이동과 수직 속도(중력/점프)를 하나로 합쳐서 호출 ★★★
+        // 이렇게 Move를 단 한 번만 호출해야 isGrounded가 정상 작동합니다.
+        Vector3 finalMove = (move * speed) + velocity;
+        controller.Move(finalMove * Time.deltaTime);
     }
 }

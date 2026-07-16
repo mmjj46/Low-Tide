@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 public class Wall : MonoBehaviour, IInteractable
 {
     public bool isBroken = false;
-    public string miniGameSceneName = "StainErasing"; // 미니게임 씬 이름 확인
+    public string miniGameSceneName = "Wall"; // 미니게임 씬 이름 확인
 
     private string myTargetName = "Wall";
     private GameManager gameManager;
@@ -53,7 +53,7 @@ public class Wall : MonoBehaviour, IInteractable
         {
             // ★ 정상 상태: 벽 두드리는 소리
             PlaySound(workingSound);
-            UIManager.Instance.ShowNotification("주먹으로 벽을 두드렸다. 이제 튼튼하다.");
+            UIManager.Instance.ShowNotification("주먹으로 벽을 두드렸다. 튼튼해서 쓰러질 염려는 없다.");
         }
         else
         {
@@ -65,7 +65,7 @@ public class Wall : MonoBehaviour, IInteractable
                 audioSource.Play();
             }
 
-            UIManager.Instance.ShowNotification("벽에 금이 갔다. 찬바람이 들어온다.");
+            UIManager.Instance.ShowNotification("주먹으로 벽을 두드렸다. 자갈이 후드득 쏟아진다.");
             TryRepair();
         }
     }
@@ -150,6 +150,12 @@ public class Wall : MonoBehaviour, IInteractable
         PlaySound(workingSound);
 
         UIManager.Instance.ShowNotification("벽의 균열을 메웠다.");
+
+        // =========================================================
+        // ★★★ 3. 오늘 하루 미션 완료 처리! (이 코드가 일기장을 엽니다) ★★★
+        PlayerPrefs.SetInt("IsTodayMissionComplete", 1);
+        PlayerPrefs.Save();
+        // =========================================================
 
         if (gameManager != null)
         {
